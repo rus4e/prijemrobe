@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#173c32">
+<title>Prijem Robe AI</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#202a26;background:#f3f6f4}
+body{max-width:1000px;margin:auto;padding:16px}
+header,.panel{background:white;border-radius:14px;padding:18px;margin-bottom:14px}
+header{background:#173c32;color:white}
+h1{margin:0 0 6px;font-size:25px}h2{font-size:18px}
+button,.filebtn{background:#176b50;color:white;border:0;border-radius:9px;padding:12px 15px;font-size:15px;cursor:pointer}
+input,select{max-width:100%;padding:10px;border:1px solid #ccd6d0;border-radius:8px}
+input[type=file]{width:100%;margin:10px 0}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.muted{color:#63716a;font-size:13px}
+.status{padding:10px;background:#edf5ef;border-radius:8px;margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 6px;border-bottom:1px solid #e2e8e4}
+td input{width:90px}
+.tablewrap{overflow-x:auto}
+.danger{background:#9c382f}
+</style>
+</head>
+<body>
+<header>
+<h1>Prijem Robe AI</h1>
+<div>Prijem robe · SAP katalog · Lokalno čuvanje</div>
+</header>
+
+<section class="panel">
+<h2>1. Uvoz artikala iz SAP-a</h2>
+<p class="muted">U SAP-u izvezi katalog u XLSX. Izaberi fajl i proveri da li su kolone ispravno prepoznate.</p>
+<input id="xlsx" type="file" accept=".xlsx,.xls,.csv">
+<div class="actions">
+<button id="import">Uvezi katalog</button>
+<button id="exportCatalog">Izvezi katalog CSV</button>
+</div>
+<div id="catalogStatus" class="status">Artikli se još nisu učitali.</div>
+</section>
+
+<section class="panel">
+<h2>2. Nova otpremnica</h2>
+<label>Broj otpremnice (opciono)</label><br>
+<input id="deliveryNo" placeholder="Npr. OTP-2026-001">
+<p class="muted">Dodaj sve stranice. Fotografije se obrađuju redom i čuvaju na ovom uređaju.</p>
+<input id="pages" type="file" accept="image/*" capture="environment" multiple>
+<div class="actions">
+<button id="readPages">Pročitaj fotografije (OCR)</button>
+<button id="saveReceipt">Sačuvaj prijem</button>
+</div>
+<div id="ocrStatus" class="status">Čekam fotografije otpremnice.</div>
+<label for="ocrText">Prepoznat tekst — proveri i po potrebi ispravi:</label>
+<textarea id="ocrText" rows="9" style="width:100%;box-sizing:border-box;margin-top:8px"
+placeholder="Tekst sa otpremnice pojaviće se ovde..."></textarea>
+</section>
+
+<section class="panel">
+<h2>3. Stavke prijema</h2>
+<p class="muted">Proveri količine pre završetka. OCR tekst nije automatski potvrđen prijem.</p>
+<div class="actions">
+<button id="match">Poveži tekst sa katalogom</button>
+<button id="addRow">Dodaj stavku ručno</button>
+<button id="exportReport">Izvezi izveštaj CSV</button>
+</div>
+<div class="tablewrap">
+<table>
+<thead><tr>
+<th>Šifra</th><th>Naziv</th><th>Očekivano</th>
+<th>Primljeno</th><th>Status</th><th></th>
+</tr></thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+</section>
+
+<section class="panel">
+<h2>4. Sačuvani podaci</h2>
+<div id="dbStatus" class="status">Otvaram lokalnu bazu...</div>
+<div class="actions">
+<button id="backup">Preuzmi rezervnu kopiju JSON</button>
+<button id="restoreBtn">Uvezi rezervnu kopiju JSON</button>
+<input id="restore" type="file" accept=".json" hidden>
+</div>
+<p class="muted">Podaci se čuvaju u pregledaču na ovom uređaju. Redovno preuzimaj rezervnu kopiju.</p>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+let db, catalog = [], receiptItems = [], currentPages = [], receiptId = null;
+
+function status(id, message) { $(id).textContent = message; }
+function openDB() {
+return new Promise((resolve, reject) => {
+const request = indexedDB.open("PrijemRobeAI", 1);
+request.onupgradeneeded = () => {
+const d = request.result;
+d.createObjectStore("catalog", {keyPath:"code"});
+d.createObjectStore("receipts", {keyPath:"id"});
+};
+request.onsuccess = () => { db=request.result; resolve(db); };
+request.onerror = () => reject(request.error);
+});
+}
+function storeAll(name, mode, action) {
+return new Promise((resolve,reject) => {
+const tx=db.transaction(name,mode);
+action(tx.objectStore(name));
+tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error);
+});
+}
+function readAll(name) {
+return new Promise((resolve,reject) => {
+const r=db.transaction(name).objectStore(name).getAll();
+r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error);
+});
+}
+function normalize(s) {
+return String(s ?? "").trim().toLowerCase()
+.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+function csvDownload(filename, data) {
+const text = "\uFEFF" + data.map(row =>
+row.map(v => '"' + String(v ?? "").replace(/"/g,'""') + '"').join(";")
+).join("\r\n");
+const a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([text],{type:"text/csv;charset=utf-8"}));
+a.download=filename; a.click();
+setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function findColumn(headers, words) {
+return headers.find(h => words.some(w => normalize(h).includes(normalize(w))));
+}
+async function loadCatalog() {
+catalog=await readAll("catalog");
+status("catalogStatus",`U bazi je ${catalog.length} artikala.`);
+}
+$("import").onclick = async () => {
+try {
+const file=$("xlsx").files[0];
+if(!file) return alert("Prvo izaberi XLSX ili CSV fajl.");
+const data=XLSX.read(await file.arrayBuffer(),{type:"array",raw:false});
+const sheet=data.Sheets[data.SheetNames[0]];
+const matrix=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
+if(matrix.length<2) throw Error("Fajl nema redove sa artiklima.");
+const headers=matrix[0].map(String);
+const codeCol=findColumn(headers,["šifra","sifra","material","matnr","artikl","kod","code"]);
+const nameCol=findColumn(headers,["naziv","opis","material description","description","name"]);
+const barCol=findColumn(headers,["barkod","barcode","ean","gtin"]);
+const unitCol=findColumn(headers,["jedinica","unit","mera","uom"]);
+if(codeCol===undefined || nameCol===undefined)
+throw Error("Ne mogu automatski da pronađem kolone za šifru i naziv. Izvezi fajl sa jasnim zaglavljima.");
+const records=[];
+for(const row of matrix.slice(1)){
+const code=String(row[headers.indexOf(codeCol)]??"").trim();
+const name=String(row[headers.indexOf(nameCol)]??"").trim();
+if(!code || !name) continue;
+records.push({
+code,name,
+barcode:barCol===undefined?"":String(row[headers.indexOf(barCol)]??"").trim(),
+unit:unitCol===undefined?"":String(row[headers.indexOf(unitCol)]??"").trim()
+});
+}
+await storeAll("catalog","readwrite",s=>records.forEach(r=>s.put(r)));
+await loadCatalog();
+status("catalogStatus",`Uvezeno/obnovljeno ${records.length} redova. Ukupno artikala: ${catalog.length}.`);
+} catch(e) { alert("Greška pri uvozu: "+e.message); }
+};
+$("exportCatalog").onclick=()=>{
+csvDownload("SAP_katalog.csv",[
+["Sifra","Naziv","Barkod","Jedinica"],
+...catalog.map(x=>[x.code,x.name,x.barcode,x.unit])
+]);
+};
+$("readPages").onclick=async()=>{
+const files=[...$("pages").files];
+if(!files.length) return alert("Dodaj fotografije otpremnice.");
+if(!window.Tesseract) return alert("OCR biblioteka nije učitana. Proveri internet.");
+currentPages=[];
+let allText="";
+try {
+const worker=await Tesseract.createWorker("eng");
+for(let i=0;i<files.length;i++){
+status("ocrStatus",`Obrađujem stranicu ${i+1} od ${files.length}...`);
+const result=await worker.recognize(files[i]);
+allText+=`\n\n--- STRANICA ${i+1} ---\n`+result.data.text;
+currentPages.push({
+name:files[i].name,
+image:await fileAsDataURL(files[i]),
+text:result.data.text
+});
+}
+await worker.terminate();
+$("ocrText").value=allText.trim();
+status("ocrStatus",`Pročitano ${files.length} stranica. Proveri tekst i pokreni povezivanje sa katalogom.`);
+} catch(e) { status("ocrStatus","OCR greška: "+e.message); }
+};
+function fileAsDataURL(file) {
+return new Promise((resolve,reject)=>{
+const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file);
+});
+}
+$("match").onclick=()=>{
+const lines=$("ocrText").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+const found=[];
+for(const item of catalog){
+const code=normalize(item.code);
+const name=normalize(item.name);
+const line=lines.find(l=>{
+const n=normalize(l);
+return (code.length>=3 && n.includes(code)) || (name.length>=6 && n.includes(name));
+});
+if(!line) continue;
+const nums=line.match(/\d+(?:[.,]\d+)?/g)||[];
+const qty=nums.length ? Number(nums[nums.length-1].replace(",",".")) : 0;
+found.push({code:item.code,name:item.name,expected:qty,received:0,status:"Za proveru"});
+}
+receiptItems=found;
+renderRows();
+status("ocrStatus",`Pronađeno ${found.length} mogućih stavki. Količine proveri ručno.`);
+};
+function renderRows() {
+const body=$("rows"); body.replaceChildren();
+receiptItems.forEach((item,i)=>{
+const tr=document.createElement("tr");
+const cells=[
+makeInput(item.code,v=>{item.code=v;}),
+makeInput(item.name,v=>{item.name=v;}),
+makeInput(item.expected,v=>{item.expected=Number(v)||0;}),
+makeInput(item.received,v=>{item.received=Number(v)||0;}),
+null,null
+];
+cells.slice(0,4).forEach(el=>{const td=document.createElement("td");td.append(el);tr.append(td);});
+const td=document.createElement("td");
+const sel=document.createElement("select");
+["Za proveru","Potvrđeno","Manjak","Višak","Nije pronađeno"].forEach(v=>{
+const o=document.createElement("option");o.value=v;o.textContent=v;
+o.selected=item.status===v;sel.append(o);
+});
+sel.onchange=()=>item.status=sel.value;td.append(sel);tr.append(td);
+const del=document.createElement("td"), b=document.createElement("button");
+b.textContent="X";b.className="danger";b.onclick=()=>{receiptItems.splice(i,1);renderRows();};
+del.append(b);tr.append(del);body.append(tr);
+});
+}
+function makeInput(value,onchange) {
+const input=document.createElement("input");input.value=value??"";
+input.onchange=()=>onchange(input.value);return input;
+}
+$("addRow").onclick=()=>{
+receiptItems.push({code:"",name:"",expected:0,received:0,status:"Za proveru"});
+renderRows();
+};
+$("saveReceipt").onclick=async()=>{
+if(!receiptItems.length && !$("ocrText").value.trim())
+return alert("Prvo fotografiši ili unesi otpremnicu.");
+receiptId=crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+const record={
+id:receiptId,number:$("deliveryNo").value.trim(),
+date:new Date().toISOString(),items:receiptItems,
+pages:currentPages,ocrText:$("ocrText").value
+};
+await storeAll("receipts","readwrite",s=>s.put(record));
+status("dbStatus","Prijem sačuvan lokalno. ID: "+receiptId);
+};
+$("exportReport").onclick=()=>{
+csvDownload("izvestaj_prijema.csv",[
+["Broj otpremnice","Sifra","Naziv","Ocekivano","Primljeno","Razlika","Status"],
+...receiptItems.map(x=>[$("deliveryNo").value,x.code,x.name,x.expected,x.received,
+x.received-x.expected,x.status])
+]);
+};
+$("backup").onclick=async()=>{
+const backup={version:1,catalog:await readAll("catalog"),receipts:await readAll("receipts")};
+const a=document.createElement("a");
+a.href=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:"application/json"}));
+a.download="PrijemRobeAI_rezervna_kopija.json";a.click();
+setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+$("restoreBtn").onclick=()=>$("restore").click();
+$("restore").onchange=async()=>{
+try{
+const f=$("restore").files[0];if(!f)return;
+const b=JSON.parse(await f.text());
+if(!Array.isArray(b.catalog)||!Array.isArray(b.receipts))throw Error("Neispravna kopija.");
+await storeAll("catalog","readwrite",s=>b.catalog.forEach(x=>s.put(x)));
+await storeAll("receipts","readwrite",s=>b.receipts.forEach(x=>s.put(x)));
+await loadCatalog();alert("Rezervna kopija je uvezena.");
+}catch(e){alert("Greška: "+e.message);}
+};
+(async()=>{
+try{await openDB();await loadCatalog();status("dbStatus","Lokalna baza je spremna.");}
+catch(e){status("dbStatus","Greška pri otvaranju baze: "+e.message);}
+})();
+</script>
+</body>
+</html>
