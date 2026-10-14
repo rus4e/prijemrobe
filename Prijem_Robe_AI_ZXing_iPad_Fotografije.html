@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#d71920">
+<title>Prijem Robe AI — crveno-beli</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#20212a;background:#f5f5f7}
+*{box-sizing:border-box}body{max-width:1100px;margin:auto;padding:14px}
+header{background:linear-gradient(135deg,#c8102e,#ed1c24 65%,#fff 65%,#fff 68%,#c8102e 68%);color:white;border-radius:18px;padding:22px;margin-bottom:14px;box-shadow:0 5px 18px #0002}
+header h1{margin:0 0 5px;font-size:27px}header p{margin:0;color:#fff}
+.badge{display:inline-block;background:#fff;color:#c8102e;border-radius:999px;padding:5px 10px;font-weight:800;font-size:12px;margin-bottom:8px}
+.panel{background:white;border:1px solid #e3e3e8;border-radius:15px;padding:17px;margin:13px 0;box-shadow:0 3px 12px #00000008}
+h2{font-size:19px;margin:0 0 10px}.muted{color:#666977;font-size:13px;line-height:1.45}
+button,.filebtn{background:#c8102e;color:white;border:0;border-radius:9px;padding:12px 15px;font-size:15px;font-weight:650;cursor:pointer}
+button.secondary{background:#30313a}button.light{background:#fbe8eb;color:#a20b23}button:disabled{opacity:.5}
+input,select,textarea{max-width:100%;padding:10px;border:1px solid #cfd0d8;border-radius:8px;font:inherit}
+input[type=file]{width:100%;margin:8px 0}input[type=number]{width:100px}
+label{font-size:14px;font-weight:600}.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.status{padding:11px;background:#fff0f2;border-left:4px solid #c8102e;border-radius:8px;margin:10px 0;font-size:14px}
+.good{background:#edf8ef;border-color:#23843c}.warn{background:#fff7e5;border-color:#d28a00}
+.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}th,td{text-align:left;padding:9px 7px;border-bottom:1px solid #e7e7ec;vertical-align:top}th{background:#f7f7f9}
+td input{width:100%;min-width:80px;padding:8px}td .small{min-width:65px;width:75px}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.stat{background:#f7f7f9;padding:12px;border-radius:10px}.stat strong{display:block;font-size:22px;color:#c8102e}
+hr{border:0;border-top:1px solid #eee;margin:16px 0}.hidden{display:none!important}
+footer{text-align:center;color:#777;font-size:12px;padding:16px}
+@media(min-width:700px){.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}}
+</style>
+</head>
+<body>
+<header>
+  <span class="badge">CRVENO-BELA VERZIJA · ZXING BARKOD SKENER</span>
+  <h1>⚪🔴 Prijem Robe AI</h1>
+  <p>Fizički prijem prvo · otpremnica posle · kontrola razlika</p>
+</header>
+
+<section class="panel">
+<h2>1. SAP katalog artikala</h2>
+<p class="muted">Uvezi Excel/CSV katalog. Prepoznavanje artikala koristi šifru, naziv i barkod kada su dostupni.</p>
+<input id="catalogFile" type="file" accept=".xlsx,.xls,.csv">
+<div class="actions"><button id="importCatalog">Uvezi katalog</button><button id="exportCatalog" class="secondary">Izvezi katalog CSV</button></div>
+<div id="catalogStatus" class="status">Katalog još nije učitan. Možeš i ručno da unosiš artikle.</div>
+</section>
+
+<section class="panel">
+<h2>2. Fizički prijem robe</h2>
+<p class="muted">Fotografiši barkod izbliza. Aplikacija prvo koristi namenski ZXing skener, zatim ugrađeni skener pregledača, pa tek onda OCR. Količinu ne pogađa — unosiš je ti kada prebrojiš robu.</p>
+<div class="two">
+  <div><label for="receiptNo">Interni broj prijema (opciono)</label><br><input id="receiptNo" placeholder="Npr. PR-2026-014" style="width:100%"></div>
+  <div><label for="arrivalPhotos">Fotografije barkodova / deklaracija</label><input id="arrivalPhotos" type="file" accept="image/*" multiple></div>
+</div>
+<div class="actions"><button id="readArrival">Pročitaj fotografije</button><button id="addRow" class="secondary">+ Dodaj artikal ručno</button><button id="saveArrival" class="light">Sačuvaj fizički prijem</button></div>
+<div id="arrivalStatus" class="status">Spreman za fotografije. Na računару можеш изабрати више слика одједном; на таблету можеш да користиш камеру.</div>
+<div class="tablewrap"><table><thead><tr><th>Šifra</th><th>Barkod</th><th>Naziv artikla</th><th>Primljena količina</th><th>Jedinica</th><th>Akcija</th></tr></thead><tbody id="arrivalRows"></tbody></table></div>
+<p class="muted">Ako isti artikal fotografišeš više puta, proveri tabelu da ne napraviš duplikat. Količina ostaje prazna dok je ne potvrdiš.</p>
+</section>
+
+<section class="panel">
+<h2>3. Otpremnica — kada stigne dokument</h2>
+<p class="muted">Fotografiši sve strane otpremnice. OCR je pomoć pri čitanju, ne garantuje tačno prepoznavanje kolona ili količina. Proveri tekst i unesi/ispravi stavke u tabeli ispod pre poređenja.</p>
+<label for="notePhotos">Fotografije otpremnice</label>
+<input id="notePhotos" type="file" accept="image/*" multiple>
+<div class="actions"><button id="readNote">Pročitaj otpremnicu (OCR)</button><button id="addNoteRow" class="secondary">+ Dodaj stavku sa otpremnice</button></div>
+<div id="noteStatus" class="status">Otpremnica još nije učitana.</div>
+<label for="noteText">Prepoznat tekst (možeš ručno da ispraviš):</label>
+<textarea id="noteText" rows="7" style="width:100%;margin-top:6px" placeholder="Ovde će se pojaviti tekst sa otpremnice..."></textarea>
+<div class="actions"><button id="suggestNoteItems" class="secondary">Pokušaj da pronađeš artikle iz kataloga</button></div>
+<div class="tablewrap"><table><thead><tr><th>Šifra</th><th>Barkod</th><th>Naziv artikla sa otpremnice</th><th>Količina po otpremnici</th><th>Jedinica</th><th>Akcija</th></tr></thead><tbody id="noteRows"></tbody></table></div>
+<div class="actions"><button id="compare">Uporedi fizički prijem sa otpremnicom</button></div>
+<div id="compareStatus" class="status">Unesi i proveri količine, pa pokreni poređenje.</div>
+<div id="results"></div>
+</section>
+
+<section class="panel">
+<h2>4. Sačuvani podaci i prenos na drugi uređaj</h2>
+<p class="muted">Podaci se čuvaju lokalno u ovom pregledaču na ovom uređaju. Ne sinhronizuju se automatski između laptopa i tableta. Koristi rezervnu kopiju za prenos.</p>
+<div class="actions"><button id="backup">Izvezi rezervnu kopiju JSON</button><label class="filebtn">Uvezi rezervnu kopiju<input id="restoreFile" type="file" accept=".json,application/json" hidden></label><button id="clearDraft" class="secondary">Očisti trenutni unos</button></div>
+<div id="savedStatus" class="status">Prijem se čuva samo kada pritisneš „Sačuvaj fizički prijem“ ili izvezeš rezervnu kopiju.</div>
+</section>
+<footer>Prijem Robe AI · crveno-beli dizajn inspirisan bojama Crvene zvezde · lokalno čuvanje</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+let catalog=[], arrival=[], noteItems=[], arrivalImages=[], noteImages=[];
+const clean=s=>String(s??"").toLocaleLowerCase("sr").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+const escapeHtml=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function setStatus(id,msg,type=""){const el=$(id);el.textContent=msg;el.className="status "+type}
+function download(name,content,type="application/json"){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function rowItem(x={}){return {code:x.code||"",barcode:x.barcode||"",name:x.name||"",qty:x.qty??"",unit:x.unit||""}}
+function findMatch(text){const t=clean(text);if(!t)return null;let best=null,score=0;for(const p of catalog){let s=0;const code=clean(p.code),bar=clean(p.barcode),name=clean(p.name);if(bar&&bar.length>=6&&t.includes(bar))s=100;if(code&&code.length>=3&&t.includes(code))s=Math.max(s,80);if(name&&name.length>=6&&t.includes(name))s=Math.max(s,50);if(s>score){best=p;score=s}}return score?best:null}
+function renderTable(tbodyId,items,kind){const body=$(tbodyId);body.replaceChildren();items.forEach((it,i)=>{const tr=document.createElement("tr");const fields=[["code","Šifra"],["barcode","Barkod"],["name","Naziv"],["qty","Količina"],["unit","Jedinica"]];fields.forEach(([key])=>{const td=document.createElement("td"),input=document.createElement("input");input.value=it[key]??"";input.setAttribute("aria-label",key);if(key==="qty"){input.type="number";input.min="0";input.step="any";input.placeholder="Unesi količinu";input.className="small"}else input.type="text";input.addEventListener("change",()=>{it[key]=input.value;if(key==="code"||key==="barcode"||key==="name"){const m=findMatch(input.value);if(m&&kind==="arrival"&&!it.name)it.name=m.name}});td.append(input);tr.append(td)});const td=document.createElement("td"),b=document.createElement("button");b.textContent="Ukloni";b.className="light";b.onclick=()=>{items.splice(i,1);renderTable(tbodyId,items,kind)};td.append(b);tr.append(td);body.append(tr)})}
+function renderArrival(){renderTable("arrivalRows",arrival,"arrival")}
+function renderNote(){renderTable("noteRows",noteItems,"note")}
+function addArrival(x={}){arrival.push(rowItem(x));renderArrival()}
+function addNote(x={}){noteItems.push(rowItem(x));renderNote()}
+function fileData(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve({name:file.name,data:r.result});r.onerror=reject;r.readAsDataURL(file)})}
+async function detectBarcodes(files,statusId){
+ const found=[]; let tried=false;
+ if(window.ZXingBrowser && window.ZXingBrowser.BrowserMultiFormatReader){tried=true;try{
+  const reader=new window.ZXingBrowser.BrowserMultiFormatReader();
+  for(let i=0;i<files.length;i++){
+   setStatus(statusId,`ZXing skener obrađuje fotografiju ${i+1}/${files.length}…`);
+   const url=URL.createObjectURL(files[i]),img=new Image();
+   try{await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});
+    let source=img;const scale=Math.max(1,Math.min(3,1400/Math.max(img.naturalWidth,img.naturalHeight)));
+    if(scale>1){const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);const ctx=c.getContext("2d");ctx.imageSmoothingEnabled=false;ctx.drawImage(img,0,0,c.width,c.height);source=c;}
+    try{const r=reader.decodeFromImageElement?await reader.decodeFromImageElement(source):null;if(r&&r.getText)found.push(r.getText())}catch(e){}
+    if(!found.length){try{const c=document.createElement("canvas");c.width=img.naturalWidth*2;c.height=img.naturalHeight*2;const ctx=c.getContext("2d");ctx.drawImage(img,0,0,c.width,c.height);const d=ctx.getImageData(0,0,c.width,c.height);for(let k=0;k<d.data.length;k+=4){const v=(d.data[k]*.299+d.data[k+1]*.587+d.data[k+2]*.114)>155?255:0;d.data[k]=d.data[k+1]=d.data[k+2]=v;}ctx.putImageData(d,0,0);const r=reader.decodeFromCanvas?await reader.decodeFromCanvas(c):null;if(r&&r.getText)found.push(r.getText())}catch(e){}}
+   }catch(e){}finally{URL.revokeObjectURL(url)}
+  }
+ }catch(e){}}
+ if("BarcodeDetector" in window && "createImageBitmap" in window){tried=true;try{const detector=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128","code_39","itf","codabar"]});for(let i=0;i<files.length;i++){setStatus(statusId,`Ugrađeni skener obrađuje fotografiju ${i+1}/${files.length}…`);let bitmap;try{bitmap=await createImageBitmap(files[i]);for(const c of await detector.detect(bitmap)){if(c.rawValue)found.push(String(c.rawValue))}}catch(e){}finally{if(bitmap&&bitmap.close)bitmap.close()}}}catch(e){}}
+ return {found:[...new Set(found.map(x=>String(x).replace(/\s/g,"")).filter(Boolean))],available:tried};
+}
+async function ocrFiles(files,statusId,lang="eng"){if(!files.length)throw Error("Izaberi fotografiju/fotografije prvo.");if(!window.Tesseract)throw Error("OCR biblioteka nije učitana. Proveri internet vezu.");const worker=await Tesseract.createWorker(lang);let texts=[],images=[];try{for(let i=0;i<files.length;i++){setStatus(statusId,`Čitam tekst sa fotografije ${i+1}/${files.length}…`);const r=await worker.recognize(files[i]);texts.push(`--- FOTOGRAFIJA ${i+1} ---\n${r.data.text}`);images.push(await fileData(files[i]))}}finally{await worker.terminate()}return {text:texts.join("\n\n"),images}}
+$("importCatalog").onclick=async()=>{const f=$("catalogFile").files[0];if(!f)return alert("Izaberi SAP Excel/CSV fajl.");if(!window.XLSX)return alert("Excel biblioteka nije učitana. Proveri internet.");try{const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}),ws=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});if(rows.length<2)throw Error("Fajl nema redove artikala.");const headers=rows[0].map(clean);const idx=keys=>headers.findIndex(h=>keys.some(k=>h.includes(k)));let ci=idx(["sifra","sifartikla","artikal","code","sku"]),ni=idx(["naziv","name","opis"]),bi=idx(["barkod","barcode","ean","upc"]),ui=idx(["jedinica","unit","jm"]);if(ni<0)ni=1;if(ci<0)ci=0;catalog=rows.slice(1).filter(r=>r.some(v=>String(v).trim())).map(r=>({code:String(r[ci]??"").trim(),name:String(r[ni]??"").trim(),barcode:bi<0?"":String(r[bi]??"").trim(),unit:ui<0?"":String(r[ui]??"").trim()})).filter(x=>x.code||x.name||x.barcode);setStatus("catalogStatus",`Učitano ${catalog.length} artikala. Proveri šifre, nazive i barkodove pre upotrebe.`,"good")}catch(e){alert("Greška pri uvozu: "+e.message)}};
+$("exportCatalog").onclick=()=>download("SAP_katalog.csv",["Sifra,Naziv,Barkod,Jedinica",...catalog.map(x=>[x.code,x.name,x.barcode,x.unit].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(","))].join("\n"),"text/csv;charset=utf-8");
+$("addRow").onclick=()=>addArrival();$("addNoteRow").onclick=()=>addNote();
+$("readArrival").onclick=async()=>{try{const f=[...$("arrivalPhotos").files];if(!f.length)throw Error("Izaberi fotografiju/fotografije prvo.");const scan=await detectBarcodes(f,"arrivalStatus");let added=0,matched=0,unknown=[];for(const raw of scan.found){const norm=clean(raw);const m=catalog.find(p=>clean(p.barcode)===norm);if(m){matched++;if(!arrival.some(a=>clean(a.barcode)===norm|| (m.code&&clean(a.code)===clean(m.code)))){addArrival({code:m.code,barcode:m.barcode||raw,name:m.name,unit:m.unit,qty:""});added++}}else unknown.push(raw)}arrivalImages=arrivalImages.concat(await Promise.all(f.map(fileData)));if(scan.available&&scan.found.length){let msg=`Pravi skener barkoda pronašao je ${scan.found.length} barkod(ova); ${matched} je povezano sa katalogom, dodato ${added} novih stavki.`;if(unknown.length)msg+=` Nepoznati barkodovi: ${unknown.join(", ")}.`;msg+=" Količine unesi ručno.";setStatus("arrivalStatus",msg,matched?"good":"warn")}else{setStatus("arrivalStatus","Direktni skener nije očitao barkod. Pokušavam rezervno OCR čitanje teksta…","warn");const r=await ocrFiles(f,"arrivalStatus");let ocrAdded=0;for(const line of r.text.split(/\n/).map(x=>x.trim()).filter(Boolean)){const m=findMatch(line);if(m&&!arrival.some(a=>(m.barcode&&clean(a.barcode)===clean(m.barcode))||(m.code&&clean(a.code)===clean(m.code)))){addArrival({code:m.code,barcode:m.barcode,name:m.name,unit:m.unit,qty:""});ocrAdded++}}setStatus("arrivalStatus",`Rezervno OCR čitanje je završeno; dodato ${ocrAdded} mogućih artikala. Ako tabela ostane prazna, probaj fotografiju izbliza, pravo ispred barkoda, bez odsjaja. Količine unesi ručno.`,"warn")}}catch(e){setStatus("arrivalStatus",e.message,"warn")}};
+$("readNote").onclick=async()=>{try{const r=await ocrFiles([...$("notePhotos").files],"noteStatus");noteImages=noteImages.concat(r.images);$("noteText").value=r.text;setStatus("noteStatus","OCR je završen. Proveri tekst; OCR može pogrešiti šifre, kolone i količine.","warn")}catch(e){setStatus("noteStatus",e.message,"warn")}};
+$("suggestNoteItems").onclick=()=>{const text=$("noteText").value;if(!text.trim())return alert("Prvo pročitaj otpremnicu ili nalepi tekst.");let added=0;for(const line of text.split(/\n/).map(x=>x.trim()).filter(Boolean)){const m=findMatch(line);if(m&&!noteItems.some(a=>(m.code&&a.code===m.code)||(m.barcode&&a.barcode===m.barcode))){noteItems.push(rowItem({code:m.code,barcode:m.barcode,name:m.name,unit:m.unit,qty:""}));added++}}renderNote();setStatus("noteStatus",`Pronađeno ${added} mogućih stavki iz kataloga. Količine sa otpremnice unesi/proveri ručno u tabeli.`,"warn")};
+$("saveArrival").onclick=()=>{if(!arrival.length)return alert("Nema artikala za čuvanje. Dodaj ih prvo.");const missing=arrival.filter(x=>x.qty===""||x.qty===null);if(missing.length&&!confirm(`${missing.length} artikala nema unetu količinu. Sačuvati prijem i nastaviti?`))return;const data={version:2,receiptNo:$("receiptNo").value,date:new Date().toISOString(),catalog,arrival,noteItems,arrivalImages,noteImages,noteText:$("noteText").value};try{localStorage.setItem("prijemRobeAI_v2",JSON.stringify(data));setStatus("savedStatus",`Prijem sačuvan u ovom pregledaču. Stavki: ${arrival.length}. Za sigurnost izvezi JSON rezervnu kopiju.`,"good")}catch(e){setStatus("savedStatus","Čuvanje nije uspelo (moguće premalo prostora). Izvezi rezervnu kopiju JSON. Greška: "+e.message,"warn")}};
+$("compare").onclick=()=>{if(!arrival.length||!noteItems.length)return alert("Potrebne su stavke i iz fizičkog prijema i sa otpremnice.");const key=x=>clean(x.barcode)||clean(x.code)||clean(x.name);const used=new Set(),results=[];for(const n of noteItems){const k=key(n);let a=arrival.find((x,i)=>!used.has(i)&&((clean(n.barcode)&&clean(n.barcode)===clean(x.barcode))||(clean(n.code)&&clean(n.code)===clean(x.code))||(!n.barcode&&!n.code&&clean(n.name)&&clean(n.name)===clean(x.name))));if(a){used.add(arrival.indexOf(a));const nq=n.qty===""?null:Number(n.qty),aq=a.qty===""?null:Number(a.qty);let state;if(nq===null||aq===null)state="Nedostaje količina — proveri";else if(aq<nq)state="MANJAK";else if(aq>nq)state="VIŠAK";else state="Poklapa se";results.push({name:n.name||a.name||n.code,expected:nq,actual:aq,state})}else results.push({name:n.name||n.code||n.barcode,expected:n.qty===""?null:Number(n.qty),actual:null,state:"Na otpremnici, nije pronađen u fizičkom prijemu"})}arrival.forEach((a,i)=>{if(!used.has(i))results.push({name:a.name||a.code||a.barcode,expected:null,actual:a.qty===""?null:Number(a.qty),state:"Fizički primljen, nije na otpremnici"})});const body=document.createElement("div");body.className="panel";const counts={"MANJAK":0,"VIŠAK":0,"Poklapa se":0};results.forEach(r=>{if(counts[r.state]!==undefined)counts[r.state]++});body.innerHTML=`<h3>Rezultat poređenja</h3><div class="statgrid"><div class="stat"><strong>${counts["Poklapa se"]}</strong>Poklapa se</div><div class="stat"><strong>${counts.MANJAK}</strong>Manjak</div><div class="stat"><strong>${counts["VIŠAK"]}</strong>Višak</div><div class="stat"><strong>${results.filter(r=>r.state.includes("nije")||r.state.includes("Nedostaje")).length}</strong>Za proveru</div></div><div class="tablewrap"><table><thead><tr><th>Artikal</th><th>Količina po otpremnici</th><th>Fizički primljeno</th><th>Rezultat</th></tr></thead><tbody>${results.map(r=>`<tr><td>${escapeHtml(r.name)}</td><td>${r.expected===null?"—":escapeHtml(r.expected)}</td><td>${r.actual===null?"—":escapeHtml(r.actual)}</td><td>${escapeHtml(r.state)}</td></tr>`).join("")}</tbody></table></div><p class="muted">Poređenje koristi barkod, zatim šifru; naziv se koristi samo kada nema šifre ni barkoda. Proveri stavke koje OCR ili katalog nisu pouzdano povezali.</p>`;$("results").replaceChildren(body);setStatus("compareStatus","Poređenje je završeno. Proveri sve stavke označene „Za proveru“; rezultat zavisi od ispravnosti unetih podataka.","good")};
+$("backup").onclick=()=>{const data={version:2,receiptNo:$("receiptNo").value,catalog,arrival,noteItems,arrivalImages,noteImages,noteText:$("noteText").value,exportedAt:new Date().toISOString()};download("prijem_robe_rezervna_kopija.json",JSON.stringify(data,null,2))};
+$("restoreFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!confirm("Uvoz rezervne kopije će zameniti trenutne podatke na ekranu. Nastaviti?"))return;catalog=d.catalog||[];arrival=d.arrival||[];noteItems=d.noteItems||[];arrivalImages=d.arrivalImages||[];noteImages=d.noteImages||[];$("receiptNo").value=d.receiptNo||"";$("noteText").value=d.noteText||"";renderArrival();renderNote();setStatus("savedStatus","Rezervna kopija je učitana. Proveri podatke pa ih sačuvaj.","good");setStatus("catalogStatus",`Učitano ${catalog.length} artikala iz kopije.`,"good")}catch(err){alert("Ne mogu da učitam kopiju: "+err.message)}};
+$("clearDraft").onclick=()=>{if(!confirm("Obrisati trenutne stavke sa ekrana? Prethodno izvezi rezervnu kopiju ako želiš da ih sačuvaš."))return;arrival=[];noteItems=[];arrivalImages=[];noteImages=[];$("noteText").value="";$("arrivalPhotos").value="";$("notePhotos").value="";$("receiptNo").value="";renderArrival();renderNote();$("results").replaceChildren();setStatus("arrivalStatus","Trenutni unos je očišćen.")};
+try{const d=JSON.parse(localStorage.getItem("prijemRobeAI_v2")||"null");if(d){catalog=d.catalog||[];arrival=d.arrival||[];noteItems=d.noteItems||[];arrivalImages=d.arrivalImages||[];noteImages=d.noteImages||[];$("receiptNo").value=d.receiptNo||"";$("noteText").value=d.noteText||"";renderArrival();renderNote();setStatus("savedStatus","Učitani su prethodno sačuvani podaci iz ovog pregledača.","good");setStatus("catalogStatus",`Učitano ${catalog.length} artikala iz lokalno sačuvanih podataka.`,"good")}}catch(e){setStatus("savedStatus","Postojeći lokalni podaci nisu mogli da se učitaju. Izbegni brisanje podataka pregledača.","warn")}
+</script>
+</body>
+</html>
