@@ -54,10 +54,46 @@ html[data-theme="dark"] .dashboard-tabs{background:#2b333d!important}
 a{color:var(--pr-red-dark)}
 .pr-bottom-nav{position:fixed;z-index:20;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 6px calc(8px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--pr-card) 94%,transparent);border-top:1px solid var(--pr-line);backdrop-filter:blur(16px)}
 .pr-bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--pr-muted)!important;font-size:10px;font-weight:650;text-decoration:none;padding:3px 2px}.pr-bottom-nav .nav-icon{font-size:18px;line-height:1.1}.pr-bottom-nav a.active{color:var(--pr-red)!important}
-@media(min-width:760px){body{padding-bottom:30px!important}.pr-bottom-nav{left:50%;right:auto;bottom:12px;transform:translateX(-50%);width:min(680px,calc(100% - 32px));border:1px solid var(--pr-line);border-radius:18px;box-shadow:0 12px 32px #1f293722}}</style></head><body>
+@media(min-width:760px){body{padding-bottom:30px!important}.pr-bottom-nav{left:50%;right:auto;bottom:12px;transform:translateX(-50%);width:min(680px,calc(100% - 32px));border:1px solid var(--pr-line);border-radius:18px;box-shadow:0 12px 32px #1f293722}}
+.flow-screen{position:fixed;inset:0;z-index:1000;overflow:auto;background:var(--pr-bg,#f4f6f8);color:var(--pr-ink,#20212a);padding:env(safe-area-inset-top,0px) 14px env(safe-area-inset-bottom,0px)}
+.flow-inner{width:min(100%,520px);min-height:100%;margin:auto;display:flex;flex-direction:column;padding:12px 0 22px}
+.flow-head{display:flex;align-items:center;gap:10px;margin:0 0 24px}.flow-head img{width:42px;height:42px;object-fit:contain;background:#fff;border-radius:12px;padding:3px}.flow-brand{font-weight:800;font-size:16px;line-height:1.1}.flow-brand small{display:block;font-size:10px;font-weight:500;opacity:.8;margin-top:3px}
+.flow-back{width:42px;height:42px;flex:none;border:1px solid var(--pr-line,#e1e5ea);border-radius:50%;background:var(--pr-card,#fff);color:var(--pr-ink,#20212a);font-size:22px;box-shadow:none!important;padding:0!important}
+.flow-kicker{color:var(--pr-red,#e51b23);font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin:0 0 6px}.flow-screen h1{font-size:25px;letter-spacing:-.45px;margin:0 0 7px}.flow-lead{font-size:13px;color:var(--pr-muted,#667085);line-height:1.5;margin:0 0 20px}
+.receipt-number{border:1px solid var(--pr-line,#e1e5ea);border-radius:15px;padding:14px 15px;background:var(--pr-card,#fff);margin:4px 0 18px}.receipt-number span{display:block;font-size:11px;color:var(--pr-muted,#667085);margin-bottom:4px}.receipt-number strong{font-size:20px;letter-spacing:.02em;color:var(--pr-ink,#20212a)}
+.flow-field{display:block;font-size:13px;font-weight:700;margin:0 0 7px}.flow-screen input[type=date],.flow-screen input[type=number]{width:100%;max-width:none;min-height:48px;margin-bottom:15px}
+.flow-spacer{flex:1;min-height:28px}.flow-primary{width:100%;min-height:52px!important;font-size:15px!important;border-radius:14px!important}.flow-card{margin:auto 0;background:var(--pr-card,#fff);border:1px solid var(--pr-line,#e1e5ea);border-radius:18px;padding:17px;box-shadow:0 8px 26px #17212b12}.flow-product-field{padding:10px 0;border-bottom:1px solid var(--pr-line,#e1e5ea)}.flow-product-field:last-of-type{border:0}.flow-product-field small{display:block;font-size:11px;color:var(--pr-muted,#667085);margin-bottom:3px}.flow-product-field strong{font-size:15px;overflow-wrap:anywhere}.flow-product-name{font-size:18px!important;line-height:1.3}.flow-duplicate{margin:10px 0;padding:10px 12px;border:1px solid #e4a62b;background:#fff7e5;color:#805900;border-radius:10px;font-size:12px;line-height:1.4}
+html[data-theme="dark"] .flow-duplicate{background:#3b3018;color:#ffdc82;border-color:#765d20}
+@media(min-width:760px){.flow-screen{padding-top:18px}.flow-inner{min-height:calc(100vh - 36px)}.flow-card{padding:22px}}
+</style></head><body>
+<section class="flow-screen" id="newReceiptScreen" aria-labelledby="newReceiptTitle">
+  <div class="flow-inner">
+    <div class="flow-head"><img src="./assets/logo-mark.svg" alt=""><div class="flow-brand">Prijem Robe<small>Brže. Tačnije. Jednostavnije.</small></div></div>
+    <p class="flow-kicker">Novi prijem</p><h1 id="newReceiptTitle">Započni prijem robe</h1>
+    <p class="flow-lead">Proveri broj prijema i datum, pa započni skeniranje artikala.</p>
+    <div class="receipt-number"><span>Broj prijema</span><strong id="receiptNumberPreview">—</strong></div>
+    <label class="flow-field" for="receiptDate">Datum prijema</label><input type="date" id="receiptDate">
+    <div class="flow-spacer"></div><button class="flow-primary" id="beginReceipt" type="button">Počni prijem</button>
+  </div>
+</section>
+<section class="flow-screen hidden" id="productCardScreen" aria-labelledby="productCardTitle">
+  <div class="flow-inner">
+    <div class="flow-head"><button class="flow-back" id="cancelProduct" type="button" aria-label="Nazad na skener">‹</button><div class="flow-brand">Dodavanje artikla</div></div>
+    <p class="flow-kicker" id="productScanLabel">Artikal je očitan</p><h1 id="productCardTitle">Proveri artikal</h1>
+    <div class="flow-card">
+      <div class="flow-product-field"><small>LK / Šifra artikla</small><strong id="cardCode">—</strong></div>
+      <div class="flow-product-field"><small>Barkod</small><strong id="cardBarcode">—</strong></div>
+      <div class="flow-product-field"><small>Naziv artikla</small><strong class="flow-product-name" id="cardName">—</strong></div>
+      <div class="flow-duplicate hidden" id="duplicateNotice">Ovaj artikal je već dodat u prijem. Potvrdom će se uneta količina dodati postojećoj.</div>
+      <label class="flow-field" for="cardQuantity">Količina</label><input type="number" id="cardQuantity" min="1" step="1" inputmode="numeric" value="1">
+      <button class="flow-primary" id="addCardProduct" type="button">Dodaj u prijem</button>
+    </div>
+  </div>
+</section>
+
 <header><div class="pr-brand-bar"><img src="./assets/logo-mark.svg" alt=""><span>Prijem Robe</span><span class="pr-brand-spacer"></span><button type="button" class="pr-theme-toggle" data-theme-toggle>☾ Tamna tema</button></div><h1>Novi prijem</h1><p>Brz popis pristigle robe · radi na iPhone, iPad i Android uređajima</p><p><a href="./index.html" style="color:#fff">← Početna</a> · <a href="./pro.html" style="color:#fff">Otvori PRO</a></p></header>
 <main>
-<div class="dashboard-summary"><div><span class="eyebrow">AKTIVAN PRIJEM</span><h2 id="currentListTitle">Prijem robe</h2><p>Brzo očitaj, proveri i sačuvaj spisak.</p></div><div class="summary-count"><strong id="count">0 stavki</strong><span>na spisku</span></div></div>
+<div class="dashboard-summary"><div><span class="eyebrow">AKTIVAN PRIJEM</span><h2 id="currentListTitle">Prijem robe</h2><p>Datum: <span id="currentReceiptDate">—</span> · Skeniraj artikle i unesi količinu.</p></div><div class="summary-count"><strong id="count">0 stavki</strong><span>na spisku</span></div></div>
 <nav class="dashboard-tabs" aria-label="Brza navigacija"><a href="#scannerPanel">Skeniraj</a><a href="#listPanel">Spisak</a><a href="#manualPanel">Ručno dodavanje</a></nav>
 <section id="scannerPanel" class="panel">
 <h2>Skeniraj artikal</h2>
@@ -92,6 +128,23 @@ const byBarcode=new Map(),byCode=new Map();
 for(const p of CATALOG){if(p.barcode)byBarcode.set(digits(p.barcode),p);if(p.code)byCode.set(p.code.toLowerCase(),p)}
 let items=[],stream=null,scanTimer=null,detector=null,scannerLib=null,lastCode='',lastAt=0,audioContext=null,savedLists=[],activeSavedListId='';
 function setStatus(t,kind=''){ $('status').className='status '+kind; $('status').textContent=t; }
+
+let receiptMeta=null,currentCardProduct=null;
+const receiptDateInput=$('receiptDate'),todayLocal=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+function nextReceiptNumber(date){const day=String(date||todayLocal()).replace(/-/g,'');let n=1;try{n=(Number(localStorage.getItem('prijem-mini-seq-'+day))||0)+1}catch(e){}return '#'+day+'-'+String(n).padStart(4,'0')}
+function updateReceiptPreview(){if(!$('receiptNumberPreview'))return;const date=receiptDateInput.value||todayLocal();$('receiptNumberPreview').textContent=nextReceiptNumber(date)}
+receiptDateInput.value=todayLocal();receiptDateInput.addEventListener('change',updateReceiptPreview);updateReceiptPreview();
+function showNewReceipt(){ $('newReceiptScreen').classList.remove('hidden');$('productCardScreen').classList.add('hidden');window.scrollTo(0,0) }
+function showScanner(){ $('newReceiptScreen').classList.add('hidden');$('productCardScreen').classList.add('hidden');window.scrollTo(0,0) }
+function showProductCard(p){if(!p)return;currentCardProduct=p;stopCamera();$('cardCode').textContent=p.code||'—';$('cardBarcode').textContent=p.barcode||'—';$('cardName').textContent=p.name||'—';const duplicate=items.find(x=>sameProduct(x,p));$('duplicateNotice').classList.toggle('hidden',!duplicate);$('cardQuantity').value='1';$('newReceiptScreen').classList.add('hidden');$('productCardScreen').classList.remove('hidden');window.scrollTo(0,0);setTimeout(()=>$('cardQuantity').focus({preventScroll:true}),80)}
+function archivePreviousReceipt(){if(!items.length)return;const name=receiptMeta?.number||('Prethodni prijem '+new Date().toLocaleString('sr-RS'));let entry=savedLists.find(x=>x.name===name);if(!entry){entry={id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),name,items:[],updatedAt:Date.now()};savedLists.push(entry)}entry.items=JSON.parse(JSON.stringify(items));entry.updatedAt=Date.now();saveSavedLists()}
+function beginReceipt(){const date=receiptDateInput.value||todayLocal();if(items.length){archivePreviousReceipt();setStatus('Prethodni prijem je sačuvan u arhivi.','good')}const number=nextReceiptNumber(date);try{localStorage.setItem('prijem-mini-seq-'+date.replace(/-/g,''),String(Number(number.slice(-4))))}catch(e){}receiptMeta={number,date,active:true,startedAt:Date.now()};try{localStorage.setItem('prijem-mini-receipt-meta',JSON.stringify(receiptMeta))}catch(e){}items=[];activeSavedListId='';$('listName').value=number;$('currentListTitle').textContent=number;$('currentReceiptDate').textContent=new Date(date+'T00:00:00').toLocaleDateString('sr-RS');render();saveLocal();renderSavedLists();history.replaceState(null,'',location.pathname);showScanner();setStatus('Prijem '+number+' je započet. Usmeri kameru ka barkodu.','good')}
+$('beginReceipt').addEventListener('click',beginReceipt);
+$('cancelProduct').addEventListener('click',()=>{ $('productCardScreen').classList.add('hidden');showScanner() });
+$('addCardProduct').addEventListener('click',()=>{const qty=Math.max(1,Number($('cardQuantity').value)||1);if(currentCardProduct)addProduct(currentCardProduct,qty);$('productCardScreen').classList.add('hidden');showScanner();$('scannerPanel').scrollIntoView({behavior:'smooth',block:'start'})});
+try{receiptMeta=JSON.parse(localStorage.getItem('prijem-mini-receipt-meta')||'null')}catch(e){}
+if(location.search.includes('new=1'))showNewReceipt();else if(location.hash==='#listPanel'||location.hash==='#manualPanel')showScanner();else if(receiptMeta?.active){receiptDateInput.value=receiptMeta.date||todayLocal();$('receiptNumberPreview').textContent=receiptMeta.number||nextReceiptNumber(receiptDateInput.value);$('currentListTitle').textContent=receiptMeta.number||'Prijem robe';$('currentReceiptDate').textContent=receiptMeta.date?new Date(receiptMeta.date+'T00:00:00').toLocaleDateString('sr-RS'):'—';showScanner()}else showNewReceipt();
+
 function sameProduct(a,b){const ab=digits(a.barcode),bb=digits(b.barcode);return (ab&&bb&&ab===bb)||(a.code&&b.code&&String(a.code).toLowerCase()===String(b.code).toLowerCase())}
 function addProduct(p,qty=1){
  if(!p){setStatus('Artikal nije pronađen u katalogu. Pretraži ga po nazivu ili šifri ispod.','warn');return}
@@ -128,7 +181,7 @@ function showSuggestions(q,target){
 }
 $('catalogSearch').addEventListener('input',e=>showSuggestions(e.target.value,$('suggestions')));
 $('search').addEventListener('input',e=>{const q=e.target.value.toLocaleLowerCase('sr');$('rows').querySelectorAll('tr').forEach(tr=>tr.style.display=tr.textContent.toLocaleLowerCase('sr').includes(q)?'':'none')});
-$('suggestions').addEventListener('click',e=>{const code=e.target.dataset.addcode;if(code){const p=byCode.get(code.toLowerCase());addProduct(p);$('catalogSearch').value='';$('suggestions').innerHTML=''}});
+$('suggestions').addEventListener('click',e=>{const code=e.target.dataset.addcode;if(code){const p=byCode.get(code.toLowerCase());showProductCard(p);$('catalogSearch').value='';$('suggestions').innerHTML=''}});
 async function loadScanner(){
  if('BarcodeDetector' in window){try{detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','qr_code']});return 'native'}catch(e){}}
  if(!scannerLib){
@@ -159,7 +212,7 @@ async function startCamera(){
 function handleCode(raw){
  const code=digits(raw);if(!code)return;const now=Date.now();if(code===lastCode&&now-lastAt<1800)return;lastCode=code;lastAt=now;beep();
  const p=byBarcode.get(code);
- if(p){addProduct(p);if(navigator.vibrate)navigator.vibrate(80)}else setStatus('Očitani barkod '+code+' nije u katalogu. Potraži artikal po nazivu ili proveri barkod.','warn');
+ if(p){if(navigator.vibrate)navigator.vibrate(80);showProductCard(p)}else setStatus('Očitani barkod '+code+' nije u katalogu. Potraži artikal po nazivu ili proveri barkod.','warn');
 }
 function stopCamera(){if(scanTimer){clearInterval(scanTimer);scanTimer=null}try{window.__reader?.stopContinuousDecode?.();window.__reader?.reset?.()}catch(e){}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('video').srcObject=null;$('cameraArea').style.display='none';$('video').style.display='none';$('startCamera').disabled=false;$('stopCamera').disabled=true}
 $('startCamera').onclick=startCamera;$('stopCamera').onclick=stopCamera;
@@ -179,4 +232,5 @@ try{const saved=JSON.parse(localStorage.getItem('prijem-mini-items')||'[]');if(A
 try{const lists=JSON.parse(localStorage.getItem('prijem-mini-lists')||'[]');if(Array.isArray(lists))savedLists=lists}catch(e){}
 renderSavedLists();
 render();
+if(location.hash==='#listPanel')setTimeout(()=>$('listPanel').scrollIntoView({behavior:'smooth',block:'start'}),100);
 </script><script>if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script><script>(()=>{const k='prijem-robe-tema-maketa',r=document.documentElement,b=document.querySelector('[data-theme-toggle]');let t='light';try{t=localStorage.getItem(k)||'light'}catch(e){}const a=()=>{r.dataset.theme=t;if(b)b.textContent=t==='light'?'☾ Tamna tema':'☼ Svetla tema'};a();b?.addEventListener('click',()=>{t=t==='light'?'dark':'light';try{localStorage.setItem(k,t)}catch(e){}a()})})();</script><nav class="pr-bottom-nav" aria-label="Glavna navigacija"><a href="./mini.html#scannerPanel"><span class="nav-icon">▦</span><span>Novi prijem</span></a><a href="./mini.html#listPanel"><span class="nav-icon">▤</span><span>Arhiva</span></a><a href="./pro.html#catalogPanel"><span class="nav-icon">◇</span><span>Katalog</span></a><a href="./pro.html#notePanel"><span class="nav-icon">▧</span><span>Kontrola</span></a></nav></body></html>
