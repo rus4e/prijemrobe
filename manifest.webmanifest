@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "Prijem Robe",
+  "short_name": "Prijem Robe",
+  "description": "Mobilni prijem robe i kontrola otpremnice",
+  "lang": "sr-Latn",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f6f8",
+  "theme_color": "#e51b23",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

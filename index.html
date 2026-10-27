@@ -1,301 +1,63 @@
-<!DOCTYPE html>
-<html lang="sr">
+<!doctype html>
+<html lang="sr-Latn" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#173c32">
-<title>Prijem Robe AI</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<style>
-:root{font-family:system-ui,-apple-system,sans-serif;color:#202a26;background:#f3f6f4}
-body{max-width:1000px;margin:auto;padding:16px}
-header,.panel{background:white;border-radius:14px;padding:18px;margin-bottom:14px}
-header{background:#173c32;color:white}
-h1{margin:0 0 6px;font-size:25px}h2{font-size:18px}
-button,.filebtn{background:#176b50;color:white;border:0;border-radius:9px;padding:12px 15px;font-size:15px;cursor:pointer}
-input,select{max-width:100%;padding:10px;border:1px solid #ccd6d0;border-radius:8px}
-input[type=file]{width:100%;margin:10px 0}
-.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-.muted{color:#63716a;font-size:13px}
-.status{padding:10px;background:#edf5ef;border-radius:8px;margin:10px 0}
-table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{text-align:left;padding:9px 6px;border-bottom:1px solid #e2e8e4}
-td input{width:90px}
-.tablewrap{overflow-x:auto}
-.danger{background:#9c382f}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e51b23">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="description" content="Prijem Robe — pilot aplikacija za prijem i kontrolu robe.">
+  <title>Prijem Robe — Pilot</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <style>
+    :root{color-scheme:light;--red:#e51b23;--red2:#c90017;--ink:#16212b;--muted:#66717e;--line:#e6e8eb;--card:rgba(255,255,255,.94);--soft:#f7f8fa;--shadow:0 5px 15px rgba(35,44,52,.12)}
+    [data-theme="dark"]{color-scheme:dark;--ink:#f2f4f6;--muted:#bbc2c9;--line:#41474e;--card:rgba(35,40,46,.95);--soft:#2c3238;--shadow:0 5px 15px rgba(0,0,0,.22)}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font:14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--ink)}
+    body{min-height:100dvh;padding-bottom:calc(68px + env(safe-area-inset-bottom));background:#f5f5f4 url("./assets/backgrounds/kartons-svetli.jpg") center 55%/cover fixed no-repeat}
+    body:before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.48) 55%,rgba(255,255,255,.32))}
+    [data-theme="dark"] body:before{background:rgba(13,17,21,.73)}
+    a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}.app{width:min(100%,430px);min-height:100dvh;margin:0 auto;padding:0 12px 14px;position:relative}
+    .topbar{height:77px;display:flex;align-items:center;gap:9px;padding:8px 5px}.logo{width:43px;height:43px;object-fit:contain;flex:none}.brand{min-width:0}.brand-name{font-weight:820;font-size:17px;letter-spacing:-.45px;line-height:1.05}.tagline{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:.05px}
+    .profile{margin-left:auto;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.6);display:grid;place-items:center;color:#28343f;cursor:pointer;box-shadow:0 2px 7px #17212b13}.profile svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+    .hero{display:flex;align-items:center;gap:13px;min-height:139px;margin:5px 0 12px;padding:18px 16px;border-radius:19px;color:#fff;background:linear-gradient(118deg,#f4313b 0%,#ec101e 62%,#d90018 100%);box-shadow:0 6px 16px #b30d2635;transition:transform .12s,filter .12s}
+    .hero:active,.tile:active{transform:translateY(2px) scale(.99);filter:brightness(.96)}.hero-scan{width:55px;height:55px;display:grid;place-items:center;flex:none}.hero-scan svg{width:51px;height:51px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.hero-copy{min-width:0}.hero h1{font-size:20px;letter-spacing:-.45px;line-height:1.08;margin:0}.hero p{font-size:11px;margin:5px 0 0;opacity:.94}.hero-arrow{display:grid;place-items:center;width:38px;height:38px;flex:none;margin-left:auto;border-radius:50%;background:#fff;color:var(--red);font-size:29px;line-height:1}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tile{position:relative;min-height:128px;display:flex;flex-direction:column;align-items:flex-start;padding:12px 12px 11px;border:1px solid rgba(255,255,255,.85);border-radius:16px;background:var(--card);box-shadow:var(--shadow);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);text-align:left;cursor:pointer;transition:transform .12s,filter .12s}
+    .tile-icon{height:43px;display:grid;place-items:center;color:var(--ink)}.tile-icon svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tile.archive .tile-icon{color:var(--red)}.tile h2{font-size:13px;line-height:1.1;margin:2px 0 4px;font-weight:760}.tile p{font-size:9px;line-height:1.2;color:var(--muted);margin:0}.badge{position:absolute;right:9px;top:8px;padding:3px 7px;border-radius:99px;background:#ffc928;color:#3a2e04;font-size:9px;font-weight:850}
+    .bottom{position:fixed;z-index:5;bottom:0;left:50%;transform:translateX(-50%);display:grid;width:min(100%,430px);grid-template-columns:repeat(4,1fr);padding:7px 4px calc(7px + env(safe-area-inset-bottom));border-top:1px solid #e9e9e9;background:rgba(255,255,255,.95);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}[data-theme="dark"] .bottom{background:rgba(35,40,46,.96);border-color:var(--line)}.bottom a{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:9px}.bottom a.active{color:var(--red);font-weight:760}.bottom svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    dialog{width:min(92vw,360px);border:1px solid var(--line);border-radius:17px;background:var(--card);color:var(--ink);padding:18px;box-shadow:0 22px 70px #0003}dialog::backdrop{background:#1118;backdrop-filter:blur(3px)}dialog h2{margin:0 0 6px;font-size:18px}dialog p{font-size:12px;color:var(--muted);line-height:1.45;margin:0 0 14px}.dialog-actions{display:flex;gap:8px}.dialog-actions button{min-height:42px;padding:0 13px;border:1px solid var(--line);border-radius:10px;background:var(--soft);font-weight:700;font-size:12px}.dialog-actions .close{margin-left:auto;background:var(--red);border-color:var(--red);color:white}
+    @media(min-height:760px){.topbar{height:87px}.hero{min-height:150px;margin-top:8px;margin-bottom:13px;padding:19px}.tile{min-height:137px;padding:13px}.tile-icon{height:47px}.tile h2{font-size:14px}.tile p{font-size:10px}}
+    @media(min-width:600px){body{background-position:55% center}.app{padding-left:16px;padding-right:16px}.bottom{bottom:12px;border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 24px #1f29371c}}
+  </style>
 </head>
-<body>
-<header>
-<h1>Prijem Robe AI</h1>
-<div>Prijem robe · SAP katalog · Lokalno čuvanje</div>
-</header>
-
-<section class="panel">
-<h2>1. Uvoz artikala iz SAP-a</h2>
-<p class="muted">U SAP-u izvezi katalog u XLSX. Izaberi fajl i proveri da li su kolone ispravno prepoznate.</p>
-<input id="xlsx" type="file" accept=".xlsx,.xls,.csv">
-<div class="actions">
-<button id="import">Uvezi katalog</button>
-<button id="exportCatalog">Izvezi katalog CSV</button>
+<body><div class="app">
+  <header class="topbar">
+    <img class="logo" src="./assets/logo-mark.svg" alt="">
+    <div class="brand"><div class="brand-name">Prijem Robe AI</div><div class="tagline">Brže. Tačnije. Jednostavnije.</div></div>
+    <button class="profile" id="aboutButton" type="button" aria-label="O aplikaciji"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20c.5-3.7 2.8-5.5 6.5-5.5s6 1.8 6.5 5.5"/></svg></button>
+  </header>
+  <main>
+    <a class="hero" href="./mini.html#scannerPanel">
+      <span class="hero-scan" aria-hidden="true"><svg viewBox="0 0 52 52"><path d="M8 19v-7a3 3 0 0 1 3-3h7m16 0h7a3 3 0 0 1 3 3v7M44 33v7a3 3 0 0 1-3 3h-7m-16 0h-7a3 3 0 0 1-3-3v-7"/><path d="M18 18v16m5-16v16m5-16v16m5-16v16"/></svg></span>
+      <span class="hero-copy"><h1>Novi prijem</h1><p>Skeniraj i unesi robu</p></span><span class="hero-arrow" aria-hidden="true">›</span>
+    </a>
+    <section class="grid" aria-label="Ostale funkcije">
+      <a class="tile archive" href="./mini.html#listPanel"><span class="tile-icon"><svg viewBox="0 0 24 24"><path d="M5 3.5h14v17H5zM8 7.5h8M8 11.5h8M8 15.5h6"/></svg></span><h2>Arhiva</h2><p>Pregled svih prijema</p></a>
+      <a class="tile" href="./pro.html#catalogPanel"><span class="tile-icon"><svg viewBox="0 0 24 24"><path d="m12 2.8 8 4.6v9.2l-8 4.6-8-4.6V7.4l8-4.6Z"/><path d="m4 7.4 8 4.7 8-4.7M12 12.1v9.1"/></svg></span><h2>Katalog</h2><p>Pretraga artikala</p></a>
+      <a class="tile" href="./pro.html#notePanel"><span class="badge">PRO</span><span class="tile-icon"><svg viewBox="0 0 24 24"><path d="M4 8V5h3M17 5h3v3M20 16v3h-3M7 19H4v-3"/><path d="M8 9v6m3-6v6m3-6v6m3-6v6"/></svg></span><h2>Kontrola otpremnice</h2><p>Uporedi sa otpremnicom</p></a>
+      <button class="tile" id="settingsTile" type="button"><span class="tile-icon"><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.3 13.4 1.2.9-1.1 2-1.5-.5a7.3 7.3 0 0 1-1.1.7l-.3 1.6h-2.3l-.4-1.5a7 7 0 0 1-1.3 0l-.9 1.2-2-1.1.5-1.5a7.3 7.3 0 0 1-.7-1.1l-1.6-.3v-2.3l1.5-.4a7 7 0 0 1 0-1.3l-1.2-.9 1.1-2 1.5.5a7.3 7.3 0 0 1 1.1-.7l.3-1.6h2.3l.4 1.5a7 7 0 0 1 1.3 0l.9-1.2 2 1.1-.5 1.5a7.3 7.3 0 0 1 .7 1.1l1.6.3v2.3l-1.5.4a7 7 0 0 1 0 1.3Z"/></svg></span><h2>Podešavanja</h2><p>Jezik, skeniranje, nalozi</p></button>
+    </section>
+  </main>
 </div>
-<div id="catalogStatus" class="status">Artikli se još nisu učitali.</div>
-</section>
-
-<section class="panel">
-<h2>2. Nova otpremnica</h2>
-<label>Broj otpremnice (opciono)</label><br>
-<input id="deliveryNo" placeholder="Npr. OTP-2026-001">
-<p class="muted">Dodaj sve stranice. Fotografije se obrađuju redom i čuvaju na ovom uređaju.</p>
-<input id="pages" type="file" accept="image/*" capture="environment" multiple>
-<div class="actions">
-<button id="readPages">Pročitaj fotografije (OCR)</button>
-<button id="saveReceipt">Sačuvaj prijem</button>
-</div>
-<div id="ocrStatus" class="status">Čekam fotografije otpremnice.</div>
-<label for="ocrText">Prepoznat tekst — proveri i po potrebi ispravi:</label>
-<textarea id="ocrText" rows="9" style="width:100%;box-sizing:border-box;margin-top:8px"
-placeholder="Tekst sa otpremnice pojaviće se ovde..."></textarea>
-</section>
-
-<section class="panel">
-<h2>3. Stavke prijema</h2>
-<p class="muted">Proveri količine pre završetka. OCR tekst nije automatski potvrđen prijem.</p>
-<div class="actions">
-<button id="match">Poveži tekst sa katalogom</button>
-<button id="addRow">Dodaj stavku ručno</button>
-<button id="exportReport">Izvezi izveštaj CSV</button>
-</div>
-<div class="tablewrap">
-<table>
-<thead><tr>
-<th>Šifra</th><th>Naziv</th><th>Očekivano</th>
-<th>Primljeno</th><th>Status</th><th></th>
-</tr></thead>
-<tbody id="rows"></tbody>
-</table>
-</div>
-</section>
-
-<section class="panel">
-<h2>4. Sačuvani podaci</h2>
-<div id="dbStatus" class="status">Otvaram lokalnu bazu...</div>
-<div class="actions">
-<button id="backup">Preuzmi rezervnu kopiju JSON</button>
-<button id="restoreBtn">Uvezi rezervnu kopiju JSON</button>
-<input id="restore" type="file" accept=".json" hidden>
-</div>
-<p class="muted">Podaci se čuvaju u pregledaču na ovom uređaju. Redovno preuzimaj rezervnu kopiju.</p>
-</section>
-
+<nav class="bottom" aria-label="Glavna navigacija">
+  <a class="active" href="./mini.html#scannerPanel"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5M9 21v-7h6v7"/></svg><span>Novi prijem</span></a>
+  <a href="./mini.html#listPanel"><svg viewBox="0 0 24 24"><path d="M5 3.5h14v17H5zM8 7.5h8M8 11.5h8M8 15.5h6"/></svg><span>Arhiva</span></a>
+  <a href="./pro.html#catalogPanel"><svg viewBox="0 0 24 24"><path d="m12 2.8 8 4.6v9.2l-8 4.6-8-4.6V7.4l8-4.6Z"/><path d="m4 7.4 8 4.7 8-4.7M12 12.1v9.1"/></svg><span>Katalog</span></a>
+  <a href="./pro.html#notePanel"><svg viewBox="0 0 24 24"><path d="M4 8V5h3M17 5h3v3M20 16v3h-3M7 19H4v-3"/><path d="M8 9v6m3-6v6m3-6v6m3-6v6"/></svg><span>Kontrola</span></a>
+</nav>
+<dialog id="settingsDialog"><h2>Podešavanja</h2><p>Izbor teme se pamti na ovom uređaju. Prijemi se čuvaju lokalno u pregledaču; za prenos između uređaja koristi CSV izvoz i uvoz.</p><div class="dialog-actions"><button id="toggleTheme" type="button">Uključi tamnu temu</button><button class="close" id="closeSettings" type="button">Zatvori</button></div></dialog>
+<dialog id="aboutDialog"><h2>Prijem Robe AI — Pilot</h2><p>Probna verzija za testiranje prijema robe. Ne unosi poverljive poslovne podatke. Spiskovi ostaju u pregledaču ovog uređaja dok ih ne izvezeš.</p><div class="dialog-actions"><button class="close" id="closeAbout" type="button">Zatvori</button></div></dialog>
 <script>
-const $ = id => document.getElementById(id);
-let db, catalog = [], receiptItems = [], currentPages = [], receiptId = null;
-
-function status(id, message) { $(id).textContent = message; }
-function openDB() {
-return new Promise((resolve, reject) => {
-const request = indexedDB.open("PrijemRobeAI", 1);
-request.onupgradeneeded = () => {
-const d = request.result;
-d.createObjectStore("catalog", {keyPath:"code"});
-d.createObjectStore("receipts", {keyPath:"id"});
-};
-request.onsuccess = () => { db=request.result; resolve(db); };
-request.onerror = () => reject(request.error);
-});
-}
-function storeAll(name, mode, action) {
-return new Promise((resolve,reject) => {
-const tx=db.transaction(name,mode);
-action(tx.objectStore(name));
-tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error);
-});
-}
-function readAll(name) {
-return new Promise((resolve,reject) => {
-const r=db.transaction(name).objectStore(name).getAll();
-r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error);
-});
-}
-function normalize(s) {
-return String(s ?? "").trim().toLowerCase()
-.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-}
-function csvDownload(filename, data) {
-const text = "\uFEFF" + data.map(row =>
-row.map(v => '"' + String(v ?? "").replace(/"/g,'""') + '"').join(";")
-).join("\r\n");
-const a=document.createElement("a");
-a.href=URL.createObjectURL(new Blob([text],{type:"text/csv;charset=utf-8"}));
-a.download=filename; a.click();
-setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
-function findColumn(headers, words) {
-return headers.find(h => words.some(w => normalize(h).includes(normalize(w))));
-}
-async function loadCatalog() {
-catalog=await readAll("catalog");
-status("catalogStatus",`U bazi je ${catalog.length} artikala.`);
-}
-$("import").onclick = async () => {
-try {
-const file=$("xlsx").files[0];
-if(!file) return alert("Prvo izaberi XLSX ili CSV fajl.");
-const data=XLSX.read(await file.arrayBuffer(),{type:"array",raw:false});
-const sheet=data.Sheets[data.SheetNames[0]];
-const matrix=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});
-if(matrix.length<2) throw Error("Fajl nema redove sa artiklima.");
-const headers=matrix[0].map(String);
-const codeCol=findColumn(headers,["šifra","sifra","material","matnr","artikl","kod","code"]);
-const nameCol=findColumn(headers,["naziv","opis","material description","description","name"]);
-const barCol=findColumn(headers,["barkod","barcode","ean","gtin"]);
-const unitCol=findColumn(headers,["jedinica","unit","mera","uom"]);
-if(codeCol===undefined || nameCol===undefined)
-throw Error("Ne mogu automatski da pronađem kolone za šifru i naziv. Izvezi fajl sa jasnim zaglavljima.");
-const records=[];
-for(const row of matrix.slice(1)){
-const code=String(row[headers.indexOf(codeCol)]??"").trim();
-const name=String(row[headers.indexOf(nameCol)]??"").trim();
-if(!code || !name) continue;
-records.push({
-code,name,
-barcode:barCol===undefined?"":String(row[headers.indexOf(barCol)]??"").trim(),
-unit:unitCol===undefined?"":String(row[headers.indexOf(unitCol)]??"").trim()
-});
-}
-await storeAll("catalog","readwrite",s=>records.forEach(r=>s.put(r)));
-await loadCatalog();
-status("catalogStatus",`Uvezeno/obnovljeno ${records.length} redova. Ukupno artikala: ${catalog.length}.`);
-} catch(e) { alert("Greška pri uvozu: "+e.message); }
-};
-$("exportCatalog").onclick=()=>{
-csvDownload("SAP_katalog.csv",[
-["Sifra","Naziv","Barkod","Jedinica"],
-...catalog.map(x=>[x.code,x.name,x.barcode,x.unit])
-]);
-};
-$("readPages").onclick=async()=>{
-const files=[...$("pages").files];
-if(!files.length) return alert("Dodaj fotografije otpremnice.");
-if(!window.Tesseract) return alert("OCR biblioteka nije učitana. Proveri internet.");
-currentPages=[];
-let allText="";
-try {
-const worker=await Tesseract.createWorker("eng");
-for(let i=0;i<files.length;i++){
-status("ocrStatus",`Obrađujem stranicu ${i+1} od ${files.length}...`);
-const result=await worker.recognize(files[i]);
-allText+=`\n\n--- STRANICA ${i+1} ---\n`+result.data.text;
-currentPages.push({
-name:files[i].name,
-image:await fileAsDataURL(files[i]),
-text:result.data.text
-});
-}
-await worker.terminate();
-$("ocrText").value=allText.trim();
-status("ocrStatus",`Pročitano ${files.length} stranica. Proveri tekst i pokreni povezivanje sa katalogom.`);
-} catch(e) { status("ocrStatus","OCR greška: "+e.message); }
-};
-function fileAsDataURL(file) {
-return new Promise((resolve,reject)=>{
-const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file);
-});
-}
-$("match").onclick=()=>{
-const lines=$("ocrText").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-const found=[];
-for(const item of catalog){
-const code=normalize(item.code);
-const name=normalize(item.name);
-const line=lines.find(l=>{
-const n=normalize(l);
-return (code.length>=3 && n.includes(code)) || (name.length>=6 && n.includes(name));
-});
-if(!line) continue;
-const nums=line.match(/\d+(?:[.,]\d+)?/g)||[];
-const qty=nums.length ? Number(nums[nums.length-1].replace(",",".")) : 0;
-found.push({code:item.code,name:item.name,expected:qty,received:0,status:"Za proveru"});
-}
-receiptItems=found;
-renderRows();
-status("ocrStatus",`Pronađeno ${found.length} mogućih stavki. Količine proveri ručno.`);
-};
-function renderRows() {
-const body=$("rows"); body.replaceChildren();
-receiptItems.forEach((item,i)=>{
-const tr=document.createElement("tr");
-const cells=[
-makeInput(item.code,v=>{item.code=v;}),
-makeInput(item.name,v=>{item.name=v;}),
-makeInput(item.expected,v=>{item.expected=Number(v)||0;}),
-makeInput(item.received,v=>{item.received=Number(v)||0;}),
-null,null
-];
-cells.slice(0,4).forEach(el=>{const td=document.createElement("td");td.append(el);tr.append(td);});
-const td=document.createElement("td");
-const sel=document.createElement("select");
-["Za proveru","Potvrđeno","Manjak","Višak","Nije pronađeno"].forEach(v=>{
-const o=document.createElement("option");o.value=v;o.textContent=v;
-o.selected=item.status===v;sel.append(o);
-});
-sel.onchange=()=>item.status=sel.value;td.append(sel);tr.append(td);
-const del=document.createElement("td"), b=document.createElement("button");
-b.textContent="X";b.className="danger";b.onclick=()=>{receiptItems.splice(i,1);renderRows();};
-del.append(b);tr.append(del);body.append(tr);
-});
-}
-function makeInput(value,onchange) {
-const input=document.createElement("input");input.value=value??"";
-input.onchange=()=>onchange(input.value);return input;
-}
-$("addRow").onclick=()=>{
-receiptItems.push({code:"",name:"",expected:0,received:0,status:"Za proveru"});
-renderRows();
-};
-$("saveReceipt").onclick=async()=>{
-if(!receiptItems.length && !$("ocrText").value.trim())
-return alert("Prvo fotografiši ili unesi otpremnicu.");
-receiptId=crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
-const record={
-id:receiptId,number:$("deliveryNo").value.trim(),
-date:new Date().toISOString(),items:receiptItems,
-pages:currentPages,ocrText:$("ocrText").value
-};
-await storeAll("receipts","readwrite",s=>s.put(record));
-status("dbStatus","Prijem sačuvan lokalno. ID: "+receiptId);
-};
-$("exportReport").onclick=()=>{
-csvDownload("izvestaj_prijema.csv",[
-["Broj otpremnice","Sifra","Naziv","Ocekivano","Primljeno","Razlika","Status"],
-...receiptItems.map(x=>[$("deliveryNo").value,x.code,x.name,x.expected,x.received,
-x.received-x.expected,x.status])
-]);
-};
-$("backup").onclick=async()=>{
-const backup={version:1,catalog:await readAll("catalog"),receipts:await readAll("receipts")};
-const a=document.createElement("a");
-a.href=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:"application/json"}));
-a.download="PrijemRobeAI_rezervna_kopija.json";a.click();
-setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-};
-$("restoreBtn").onclick=()=>$("restore").click();
-$("restore").onchange=async()=>{
-try{
-const f=$("restore").files[0];if(!f)return;
-const b=JSON.parse(await f.text());
-if(!Array.isArray(b.catalog)||!Array.isArray(b.receipts))throw Error("Neispravna kopija.");
-await storeAll("catalog","readwrite",s=>b.catalog.forEach(x=>s.put(x)));
-await storeAll("receipts","readwrite",s=>b.receipts.forEach(x=>s.put(x)));
-await loadCatalog();alert("Rezervna kopija je uvezena.");
-}catch(e){alert("Greška: "+e.message);}
-};
-(async()=>{
-try{await openDB();await loadCatalog();status("dbStatus","Lokalna baza je spremna.");}
-catch(e){status("dbStatus","Greška pri otvaranju baze: "+e.message);}
-})();
+(()=>{const root=document.documentElement,settings=document.getElementById('settingsDialog'),about=document.getElementById('aboutDialog'),key='prijem-robe-tema-maketa';let theme='light';try{theme=localStorage.getItem(key)||'light'}catch{}root.dataset.theme=theme;const toggle=document.getElementById('toggleTheme');const update=()=>toggle.textContent=root.dataset.theme==='dark'?'Uključi svetlu temu':'Uključi tamnu temu';update();document.getElementById('settingsTile').onclick=()=>settings.showModal();document.getElementById('closeSettings').onclick=()=>settings.close();toggle.onclick=()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem(key,root.dataset.theme)}catch{}update()};document.getElementById('aboutButton').onclick=()=>about.showModal();document.getElementById('closeAbout').onclick=()=>about.close()})();
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
-</body>
-</html>
+</body></html>

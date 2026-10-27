@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#d71920">
+<link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icons/icon-192.png">
+<title>Prijem Robe — PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#20212a;background:#f5f5f7}
+*{box-sizing:border-box}body{max-width:1100px;margin:auto;padding:14px}
+header{background:linear-gradient(135deg,#c8102e,#ed1c24 65%,#fff 65%,#fff 68%,#c8102e 68%);color:white;border-radius:18px;padding:22px;margin-bottom:14px;box-shadow:0 5px 18px #0002}
+header h1{margin:0 0 5px;font-size:27px}header p{margin:0;color:#fff}
+.badge{display:inline-block;background:#fff;color:#c8102e;border-radius:999px;padding:5px 10px;font-weight:800;font-size:12px;margin-bottom:8px}
+.panel{background:white;border:1px solid #e3e3e8;border-radius:15px;padding:17px;margin:13px 0;box-shadow:0 3px 12px #00000008}
+h2{font-size:19px;margin:0 0 10px}.muted{color:#666977;font-size:13px;line-height:1.45}
+button,.filebtn{background:#c8102e;color:white;border:0;border-radius:9px;padding:12px 15px;font-size:15px;font-weight:650;cursor:pointer}button,.filebtn{transition:transform .08s ease,filter .08s ease,box-shadow .08s ease;box-shadow:0 2px 0 #0002}button:active,.filebtn:active{transform:translateY(2px) scale(.98);filter:brightness(.92);box-shadow:0 0 0 #0002}button:focus-visible,.filebtn:focus-visible{outline:3px solid #20212a;outline-offset:2px}
+button.secondary{background:#30313a}button.light{background:#fbe8eb;color:#a20b23}button:disabled{opacity:.5}
+input,select,textarea{max-width:100%;padding:10px;border:1px solid #cfd0d8;border-radius:8px;font:inherit}
+input[type=file]{width:100%;margin:8px 0}input[type=number]{width:100px}
+label{font-size:14px;font-weight:600}.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.status{padding:11px;background:#fff0f2;border-left:4px solid #c8102e;border-radius:8px;margin:10px 0;font-size:14px}
+.good{background:#edf8ef;border-color:#23843c}.warn{background:#fff7e5;border-color:#d28a00}
+.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;min-width:720px}th,td{text-align:left;padding:9px 7px;border-bottom:1px solid #e7e7ec;vertical-align:top}th{background:#f7f7f9}
+td input{width:100%;min-width:80px;padding:8px}td .small{min-width:65px;width:75px}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.stat{background:#f7f7f9;padding:12px;border-radius:10px}.stat strong{display:block;font-size:22px;color:#c8102e}
+hr{border:0;border-top:1px solid #eee;margin:16px 0}.hidden{display:none!important}
+footer{text-align:center;color:#777;font-size:12px;padding:16px}
+@media(min-width:700px){.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}}
+/* Intake dashboard layout */
+:root{background:#f2f3f6;color:#24242b}body{max-width:1000px;padding:14px 16px 30px;background:#f2f3f6}header{border-radius:17px;padding:18px 20px;margin-bottom:11px;box-shadow:0 4px 14px #0001}header h1{font-size:23px;letter-spacing:-.35px}.badge{font-size:10px;padding:5px 9px}.dashboard-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:11px 0}.summary-box{padding:12px 14px;border:1px solid #e5e6eb;border-radius:14px;background:#fff}.summary-box strong{display:block;color:#c8102e;font-size:21px;font-variant-numeric:tabular-nums}.summary-box span{display:block;margin-top:2px;color:#686a75;font-size:11px}.dashboard-tabs{display:flex;gap:6px;margin:10px 0 14px;padding:4px;border-radius:12px;background:#e7e8ed;position:sticky;top:0;z-index:3}.dashboard-tabs a{flex:1;padding:9px 8px;border-radius:9px;text-align:center;text-decoration:none;color:#656671;font-size:12px;font-weight:650}.dashboard-tabs a:hover,.dashboard-tabs a:focus{background:#fff;color:#b5122b;outline:none}.panel{border:1px solid #e5e6eb;border-radius:15px;padding:15px;margin:11px 0;box-shadow:0 3px 12px #1111;scroll-margin-top:60px}.panel h2{font-size:16px}.muted{font-size:12px}.actions{gap:7px}.actions button,.actions .filebtn{border-radius:11px;min-height:44px}.tablewrap{border:1px solid #ececf0;border-radius:11px}table{min-width:700px}th{font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:#656671}td input{border-radius:8px}input[type=search],input:not([type=file]),textarea{border-color:#dfe0e5;border-radius:10px}.status{border-left-width:3px;border-radius:10px}#savedStatus{scroll-margin-top:60px}@media(max-width:600px){body{padding:10px 11px 24px}.dashboard-summary{gap:6px}.summary-box{padding:10px 9px}.summary-box strong{font-size:18px}.summary-box span{font-size:10px}.dashboard-tabs a{font-size:11px;padding:9px 4px}.panel{padding:13px}}
+:root{color-scheme:light;--pr-red:#e51b23;--pr-red-dark:#b71c1c;--pr-ink:#1f2937;--pr-muted:#667085;--pr-line:#e1e5ea;--pr-bg:#f4f6f8;--pr-card:#fff;--pr-soft:#f8f9fb}
+html[data-theme="dark"]{color-scheme:dark;--pr-ink:#f4f6f8;--pr-muted:#b4bbc5;--pr-line:#3b424c;--pr-bg:#161b22;--pr-card:#222831;--pr-soft:#2b333d}
+html,body{background:var(--pr-bg)!important;color:var(--pr-ink)!important}
+body{padding-bottom:92px!important}
+header{background:var(--pr-red)!important;color:#fff!important;border-radius:0 0 18px 18px!important;box-shadow:0 7px 20px #9f121d24!important}
+header h1{color:#fff!important;font-size:22px!important;letter-spacing:-.02em!important}
+header p{color:#fff!important;opacity:.88}
+.pr-brand-bar{display:flex;align-items:center;gap:10px;margin:-1px 0 12px;color:#fff;font-weight:760;font-size:14px}
+.pr-brand-bar img{width:36px;height:36px;object-fit:contain;background:#fff;border-radius:11px;padding:2px}
+.pr-brand-spacer{flex:1}
+.pr-theme-toggle{min-height:36px!important;padding:0 10px!important;border-radius:11px!important;border:1px solid #ffffff65!important;background:#ffffff20!important;color:#fff!important;box-shadow:none!important;font-size:11px!important}
+html[data-theme="dark"] .pr-theme-toggle{background:#171b21!important}
+.panel{background:var(--pr-card)!important;color:var(--pr-ink)!important;border:1px solid var(--pr-line)!important;border-radius:17px!important;box-shadow:0 5px 18px #1f293710!important}
+.panel h2,h2,h3,label,th,td{color:var(--pr-ink)}
+.muted,.tiny,footer{color:var(--pr-muted)!important}
+button,.filebtn,.filelabel{background:var(--pr-red)!important;color:#fff!important;border:0!important;border-radius:12px!important;min-height:44px!important;font-weight:700!important;box-shadow:0 3px 0 var(--pr-red-dark)!important;transition:transform .12s ease,filter .12s ease!important}
+button:active,.filebtn:active,.filelabel:active{transform:translateY(2px) scale(.985)!important;filter:brightness(.94)!important;box-shadow:0 1px 0 var(--pr-red-dark)!important}
+button.secondary,.secondary{background:var(--pr-soft)!important;color:var(--pr-ink)!important;border:1px solid var(--pr-line)!important;box-shadow:none!important}
+button.light,.light{background:#fff!important;color:var(--pr-red-dark)!important;border:1px solid #f1c5c8!important;box-shadow:none!important}
+input,select,textarea{background:var(--pr-card)!important;color:var(--pr-ink)!important;border-color:var(--pr-line)!important;border-radius:11px!important}
+input::placeholder,textarea::placeholder{color:#929aa5!important}
+.status,.stat,.summary-box,.saved-list-tools{background:var(--pr-soft)!important;color:var(--pr-ink)!important;border-color:var(--pr-line)!important}
+.status.good,.good{color:#23834a!important}.status.warn,.warn{color:#a96500!important}
+.dashboard-summary,.statgrid{gap:9px}
+.summary-box strong,.stat strong,.count{color:var(--pr-red)!important}
+.dashboard-tabs{background:#eceff3!important;border-radius:12px!important;border:1px solid var(--pr-line)!important}
+html[data-theme="dark"] .dashboard-tabs{background:#2b333d!important}
+.dashboard-tabs a{color:var(--pr-muted)!important}.dashboard-tabs a:hover,.dashboard-tabs a:focus{background:var(--pr-card)!important;color:var(--pr-red)!important}
+.tablewrap{border-color:var(--pr-line)!important;background:var(--pr-card)!important}table{color:var(--pr-ink)!important}th,td{border-color:var(--pr-line)!important}th{background:var(--pr-soft)!important;color:var(--pr-muted)!important}
+a{color:var(--pr-red-dark)}
+.pr-bottom-nav{position:fixed;z-index:20;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 6px calc(8px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--pr-card) 94%,transparent);border-top:1px solid var(--pr-line);backdrop-filter:blur(16px)}
+.pr-bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--pr-muted)!important;font-size:10px;font-weight:650;text-decoration:none;padding:3px 2px}.pr-bottom-nav .nav-icon{font-size:18px;line-height:1.1}.pr-bottom-nav a.active{color:var(--pr-red)!important}
+@media(min-width:760px){body{padding-bottom:30px!important}.pr-bottom-nav{left:50%;right:auto;bottom:12px;transform:translateX(-50%);width:min(680px,calc(100% - 32px));border:1px solid var(--pr-line);border-radius:18px;box-shadow:0 12px 32px #1f293722}}</style>
+</head>
+<body>
+<header><div class="pr-brand-bar"><img src="./assets/logo-mark.svg" alt=""><span>Prijem Robe</span><span class="pr-brand-spacer"></span><button type="button" class="pr-theme-toggle" data-theme-toggle>☾ Tamna tema</button></div>
+  <span class="badge">EAN PRO · PRAVI EAN DEKODER</span>
+  <h1>Fizički prijem i kontrola</h1>
+  <p>Fizički prijem prvo · otpremnica posle · kontrola razlika</p>
+</header>
+<div class="dashboard-summary" aria-label="Pregled prijema"><div class="summary-box"><strong id="summaryArrivalCount">0</strong><span>artikala u fizičkom prijemu</span></div><div class="summary-box"><strong id="summaryMissingCount">0</strong><span>količina nedostaje</span></div><div class="summary-box"><strong>LOKALNO</strong><span>podaci ostaju na ovom uređaju</span></div></div>
+<nav class="dashboard-tabs" aria-label="Brza navigacija prijema"><a href="#arrivalPanel">Fizički prijem</a><a href="#notePanel">Otpremnica i poređenje</a><a href="#catalogPanel">Katalog</a></nav>
+
+<section id="catalogPanel" class="panel">
+<h2>SAP katalog artikala</h2>
+<p class="muted">Uvezi Excel/CSV katalog. Ako Excel biblioteka nije učitana, aplikacija će pokušati rezervni izvor.</p>
+<input id="catalogFile" type="file" accept=".xlsx,.xls,.csv">
+<div class="actions"><button id="importCatalog">Uvezi katalog</button><button id="exportCatalog" class="secondary">Izvezi katalog CSV</button></div>
+<div id="catalogStatus" class="status">Katalog još nije učitan. Možeš i ručno da unosiš artikle.</div>
+</section>
+
+<section id="arrivalPanel" class="panel">
+<h2>Fizički prijem robe</h2>
+<p class="muted"><b>EAN barkod se čita ZXing dekoderom. OCR zatim traži jasno označenu količinu na kutiji (npr. QTY: 24 ili 24 PCS); nejasne vrednosti ostaju prazne. Proveri automatski unete količine pre čuvanja.</p>
+<div class="two">
+  <div><label for="receiptNo">Interni broj prijema (opciono)</label><br><input id="receiptNo" placeholder="Npr. PR-2026-014" style="width:100%"></div>
+  <div><label for="arrivalPhotos">Fotografije barkodova / deklaracija</label><input id="arrivalPhotos" type="file" accept="image/*" multiple></div>
+</div>
+<div class="actions"><button id="readArrival">Pročitaj fotografije</button><button id="addRow" class="secondary">+ Dodaj artikal ručno</button><button id="saveArrival" class="light">Sačuvaj fizički prijem</button></div>
+<div class="panel"><label for="arrivalCsvFiles">Uvezi objedinjeni prijem iz MINI aplikacije (CSV)</label><input id="arrivalCsvFiles" type="file" accept=".csv,text/csv" multiple><button id="importArrivalCsv" class="secondary">Uvezi i spoji fizički prijem</button><p class="muted">Možeš izabrati objedinjeni CSV ili više delimičnih CSV fajlova. Identične stavke se spajaju sabiranjem količina.</p></div>
+<div id="arrivalStatus" class="status">Spreman za fotografije. Na računару можеш изабрати више слика одједном; на таблету можеш да користиш камеру.</div>
+<input id="arrivalSearch" type="search" placeholder="Pretraži fizički prijem po nazivu, šifri ili barkodu…" style="width:100%;margin:6px 0">
+<div class="tablewrap"><table><thead><tr><th>Šifra</th><th>Barkod</th><th>Naziv artikla</th><th>Primljena količina</th><th>Jedinica</th><th>Akcija</th></tr></thead><tbody id="arrivalRows"></tbody></table></div>
+<p class="muted">Ponovljeni barkod će biti označen kao duplikat. Količina sa kutije popunjava se samo kada OCR prepozna jasan zapis kao QTY: 24, 24 PCS ili 24 kom; proveri rezultat pre čuvanja.</p>
+</section>
+
+<section id="notePanel" class="panel">
+<h2>Otpremnica i poređenje</h2>
+<p class="muted">Fotografiši sve strane otpremnice. OCR je pomoć pri čitanju, ne garantuje tačno prepoznavanje kolona ili količina. Proveri tekst i unesi/ispravi stavke u tabeli ispod pre poređenja.</p>
+<label for="notePhotos">Fotografije otpremnice</label>
+<input id="notePhotos" type="file" accept="image/*" multiple>
+<div class="actions"><button id="readNote">Pročitaj otpremnicu (OCR)</button><button id="addNoteRow" class="secondary">+ Dodaj stavku sa otpremnice</button></div>
+<div id="noteStatus" class="status">Otpremnica još nije učitana.</div>
+<label for="noteText">Prepoznat tekst (možeš ručno da ispraviš):</label>
+<textarea id="noteText" rows="7" style="width:100%;margin-top:6px" placeholder="Ovde će se pojaviti tekst sa otpremnice..."></textarea>
+<div class="actions"><button id="suggestNoteItems" class="secondary">Pokušaj da pronađeš artikle iz kataloga</button></div>
+<input id="noteSearch" type="search" placeholder="Pretraži stavke otpremnice po nazivu, šifri ili barkodu…" style="width:100%;margin:6px 0"><div class="tablewrap"><table><thead><tr><th>Šifra</th><th>Barkod</th><th>Naziv artikla sa otpremnice</th><th>Količina po otpremnici</th><th>Jedinica</th><th>Akcija</th></tr></thead><tbody id="noteRows"></tbody></table></div>
+<div class="actions"><button id="compare">Uporedi fizički prijem sa otpremnicom</button></div>
+<div id="compareStatus" class="status">Unesi i proveri količine, pa pokreni poređenje.</div>
+<div id="results"></div>
+</section>
+
+<section class="panel">
+<h2>Sačuvani podaci i prenos na drugi uređaj</h2>
+<p class="muted">Podaci se čuvaju lokalno u ovom pregledaču na ovom uređaju. Ne sinhronizuju se automatski između laptopa i tableta. Koristi rezervnu kopiju za prenos.</p>
+<div class="actions"><button id="backup">Izvezi rezervnu kopiju JSON</button><label class="filebtn">Uvezi rezervnu kopiju<input id="restoreFile" type="file" accept=".json,application/json" hidden></label><button id="clearDraft" class="secondary">Očisti trenutni unos</button></div>
+<div id="savedStatus" class="status">Prijem se čuva samo kada pritisneš „Sačuvaj fizički prijem“ ili izvezeš rezervnu kopiju.</div>
+</section>
+<footer>Prijem Robe AI EAN PRO · crveno-beli dizajn · lokalno čuvanje</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+let catalog=[], arrival=[], noteItems=[], arrivalImages=[], noteImages=[];
+const clean=s=>String(s??"").toLocaleLowerCase("sr").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+const escapeHtml=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function setStatus(id,msg,type=""){const el=$(id);el.textContent=msg;el.className="status "+type}
+let audioContext=null;
+function prepareAudio(){try{const C=window.AudioContext||window.webkitAudioContext;if(C){audioContext=audioContext||new C();if(audioContext.state==="suspended")audioContext.resume()}}catch(e){}}
+function beep(){try{prepareAudio();if(!audioContext)return;const o=audioContext.createOscillator(),g=audioContext.createGain(),t=audioContext.currentTime;o.type="sine";o.frequency.setValueAtTime(880,t);g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(.18,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+.14);o.connect(g);g.connect(audioContext.destination);o.start(t);o.stop(t+.15)}catch(e){}}
+function sameProduct(a,b){const ab=normalizeBarcode(a.barcode),bb=normalizeBarcode(b.barcode);if(ab&&bb)return ab===bb;const ac=clean(a.code),bc=clean(b.code);if(ac&&bc)return ac===bc;return !ab&&!bb&&!ac&&!bc&&!!clean(a.name)&&clean(a.name)===clean(b.name)}
+function applyListSearch(tbodyId,searchId){const q=clean($(searchId)?.value||"");$(tbodyId)?.querySelectorAll("tr").forEach(tr=>{const hay=clean(tr.textContent+" "+[...tr.querySelectorAll("input")].map(x=>x.value).join(" "));tr.hidden=!!q&&!hay.includes(q)})}
+function download(name,content,type="application/json"){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function normalizeBarcode(v){let s=String(v??"").trim().replace(/\s/g,"");if(/^\d+\.0$/.test(s))s=s.slice(0,-2);if(/^\d+(?:\.\d+)?e\+?\d+$/i.test(s)){const n=Number(s);if(Number.isFinite(n)&&Number.isSafeInteger(n))s=String(n)}return s}
+function rowItem(x={}){return {code:x.code||"",barcode:x.barcode||"",name:x.name||"",qty:x.qty??"",unit:x.unit||""}}
+function findMatch(text){const t=clean(text);if(!t)return null;let best=null,score=0;for(const p of catalog){let s=0;const code=clean(p.code),bar=clean(p.barcode),name=clean(p.name);if(bar&&bar.length>=6&&t.includes(bar))s=100;if(code&&code.length>=3&&t.includes(code))s=Math.max(s,80);if(name&&name.length>=6&&t.includes(name))s=Math.max(s,50);if(s>score){best=p;score=s}}return score?best:null}
+function renderTable(tbodyId,items,kind){const body=$(tbodyId);body.replaceChildren();items.forEach((it,i)=>{const tr=document.createElement("tr");const fields=[["code","Šifra"],["barcode","Barkod"],["name","Naziv"],["qty","Količina"],["unit","Jedinica"]];fields.forEach(([key])=>{const td=document.createElement("td"),input=document.createElement("input");input.value=it[key]??"";input.setAttribute("aria-label",key);if(key==="qty"){input.type="number";input.min="0";input.step="any";input.placeholder="Unesi količinu";input.className="small"}else input.type="text";input.addEventListener("change",()=>{it[key]=input.value;if(key==="code"||key==="barcode"||key==="name"){const m=findMatch(input.value);if(m&&kind==="arrival"&&!it.name)it.name=m.name}const duplicate=items.find(x=>x!==it&&sameProduct(x,it));if(kind==="arrival")refreshDashboard();if(duplicate)setStatus(kind==="arrival"?"arrivalStatus":"noteStatus","Duplikat: „"+(it.name||it.code||it.barcode)+"“ je već unet u ovaj spisak. Proveri ili ukloni ponovljeni red.","warn")});td.append(input);tr.append(td)});const td=document.createElement("td"),b=document.createElement("button");b.textContent="Ukloni";b.className="light";b.onclick=()=>{items.splice(i,1);renderTable(tbodyId,items,kind)};td.append(b);tr.append(td);body.append(tr)});applyListSearch(tbodyId,kind==="arrival"?"arrivalSearch":"noteSearch")}
+function refreshDashboard(){if($("summaryArrivalCount"))$("summaryArrivalCount").textContent=arrival.length;if($("summaryMissingCount"))$("summaryMissingCount").textContent=arrival.filter(x=>x.qty===""||x.qty===null).length}
+function renderArrival(){renderTable("arrivalRows",arrival,"arrival");refreshDashboard()}
+function renderNote(){renderTable("noteRows",noteItems,"note")}$("arrivalSearch").addEventListener("input",()=>applyListSearch("arrivalRows","arrivalSearch"));$("noteSearch").addEventListener("input",()=>applyListSearch("noteRows","noteSearch"))
+function addArrival(x={}){const row=rowItem(x),old=arrival.find(a=>sameProduct(a,row));if(old){if(row.qty!==""&&row.qty!==null&&Number.isFinite(Number(row.qty)))old.qty=String((Number(old.qty)||0)+Number(row.qty));renderArrival();setStatus("arrivalStatus","Duplikat: „"+(row.name||row.code||row.barcode)+"“ je već na spisku. Stavka je spojena; proveri zbirnu količinu.","warn");return false}arrival.push(row);renderArrival();return true}
+function addNote(x={}){noteItems.push(rowItem(x));renderNote()}
+function fileData(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve({name:file.name,data:r.result});r.onerror=reject;r.readAsDataURL(file)})}
+async function loadZXing(){
+ if(window.ZXing && (window.ZXing.BrowserMultiFormatReader || window.ZXing.MultiFormatReader)) return window.ZXing;
+ const urls=[
+  "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js",
+  "https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"
+ ];
+ for(const src of urls){
+  try{await new Promise((resolve,reject)=>{const sc=document.createElement("script");sc.src=src;sc.onload=resolve;sc.onerror=()=>reject(Error("Ne mogu da učitam dekoder"));document.head.appendChild(sc)});if(window.ZXing && (window.ZXing.BrowserMultiFormatReader||window.ZXing.MultiFormatReader))return window.ZXing}catch(e){}
+ }
+ throw Error("EAN dekoder nije učitan. Proveri internet vezu i osveži stranicu.");
+}
+async function detectBarcodes(files,statusId){
+ const found=[],byFile=[];let currentFileFound=[],attempts=0;const z=await loadZXing();
+ const addResult=r=>{if(r&&typeof r.getText==="function"){const v=String(r.getText()).replace(/\s/g,"");if(v){found.push(v);currentFileFound.push(v);beep()}}};
+ async function variants(file){
+  const url=URL.createObjectURL(file),img=new Image();
+  try{
+   await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});
+   const w=img.naturalWidth,h=img.naturalHeight;
+   const specs=[
+    {x:0,y:0,w,h,label:"cela fotografija"},
+    {x:0,y:h*.2,w,h:h*.6,label:"srednji deo"},
+    {x:0,y:h*.35,w,h:h*.4,label:"donji/srednji deo"},
+    {x:w*.04,y:h*.15,w:w*.92,h:h*.7,label:"širok isečak"},
+    {x:w*.1,y:h*.25,w:w*.8,h:h*.5,label:"centralni isečak"},
+    {x:0,y:h*.55,w,h:h*.4,label:"donji deo"}
+   ];
+   const out=[];
+   for(const sp of specs){
+    const sw=Math.max(1,Math.floor(sp.w)),sh=Math.max(1,Math.floor(sp.h));
+    for(const mode of ["normal","threshold","contrast"]){
+     const scale=Math.min(5,Math.max(2,2400/Math.max(sw,sh)));
+     const c=document.createElement("canvas");c.width=Math.max(1,Math.round(sw*scale));c.height=Math.max(1,Math.round(sh*scale));
+     const ctx=c.getContext("2d",{willReadFrequently:true});ctx.imageSmoothingEnabled=mode!=="threshold";ctx.imageSmoothingQuality="high";ctx.drawImage(img,sp.x,sp.y,sw,sh,0,0,c.width,c.height);
+     if(mode!=="normal")try{const d=ctx.getImageData(0,0,c.width,c.height);for(let k=0;k<d.data.length;k+=4){const v=.299*d.data[k]+.587*d.data[k+1]+.114*d.data[k+2];const n=mode==="threshold"?(v>150?255:0):Math.max(0,Math.min(255,(v-128)*1.8+128));d.data[k]=d.data[k+1]=d.data[k+2]=n;}ctx.putImageData(d,0,0)}catch(e){}
+     out.push({canvas:c,label:sp.label+" / "+mode});
+    }
+   }
+   return out;
+  }finally{URL.revokeObjectURL(url)}
+ }
+ const Reader=z.BrowserMultiFormatReader||z.BrowserBarcodeReader;
+ const hints=new Map();
+ try{hints.set(z.DecodeHintType.POSSIBLE_FORMATS,[z.BarcodeFormat.EAN_13,z.BarcodeFormat.EAN_8,z.BarcodeFormat.UPC_A,z.BarcodeFormat.UPC_E,z.BarcodeFormat.CODE_128,z.BarcodeFormat.CODE_39,z.BarcodeFormat.ITF]);hints.set(z.DecodeHintType.TRY_HARDER,true);hints.set(z.DecodeHintType.ALSO_INVERTED,true)}catch(e){}
+ let reader;
+ try{reader=Reader?new Reader(hints):new z.MultiFormatReader();if(reader.setHints)reader.setHints(hints)}catch(e){reader=Reader?new Reader():null}
+ if(!reader)throw Error("ZXing se učitao, ali dekoder nije dostupan.");
+ for(let i=0;i<files.length;i++){currentFileFound=[];
+  setStatus(statusId,`EAN dekoder: pripremam fotografiju ${i+1}/${files.length}…`);
+  const vs=await variants(files[i]);
+  for(const v of vs){
+   attempts++;setStatus(statusId,`EAN dekoder: fotografija ${i+1}/${files.length}, proba ${attempts} (${v.label})…`);
+   try{
+    const im=new Image();im.src=v.canvas.toDataURL("image/png");await new Promise((res,rej)=>{im.onload=res;im.onerror=rej});
+    let r=null;
+    if(reader.decodeFromImageElement)r=await reader.decodeFromImageElement(im);
+    else if(reader.decodeFromCanvas)r=await reader.decodeFromCanvas(v.canvas);
+    else if(z.MultiFormatReader){const lum=new z.HTMLCanvasElementLuminanceSource(v.canvas);const bin=new z.HybridBinarizer(lum);r=reader.decode(bin)}
+    addResult(r);
+   }catch(e){}
+   if(currentFileFound.length)break;
+  }
+  byFile[i]=[...new Set(currentFileFound)];
+ }
+ const unique=[...new Set(found)];return {found:unique,byFile,duplicateReads:found.length-unique.length,available:true,attempts};
+}
+function extractPackageQuantity(text){const lines=String(text||"").split(/\n/);const patterns=[/(?:^|\s)(?:qty|quantity|count|pcs|pieces|units|komada|kom\.?|шт\.?)\s*[:#x=]?\s*(\d{1,5})(?=\s|$)/i,/\b(\d{1,5})\s*(?:pcs|pieces|units|komada|kom\.?|шт\.?)\s*(?=\s|$)/i];const hits=[];for(const line of lines)for(const re of patterns){const m=line.match(re);if(m){const n=Number(m[1]);if(n>0)hits.push(n)}}const unique=[...new Set(hits)];return unique.length===1?unique[0]:null}
+async function readPackageQuantities(files,byFile,statusId){if(!files.length)return {quantities:new Map(),perFile:[],pageTexts:[]};if(!window.Tesseract)throw Error("OCR biblioteka nije učitana. Proveri internet vezu.");const worker=await Tesseract.createWorker("eng"),quantities=new Map(),perFile=[],pageTexts=[];try{for(let i=0;i<files.length;i++){setStatus(statusId,`Čitam količinu sa kutije ${i+1}/${files.length}…`);const r=await worker.recognize(files[i]),text=r.data.text||"",qty=extractPackageQuantity(text),codes=byFile[i]||[];pageTexts.push(text);perFile.push(qty);if(qty!==null&&codes.length===1){const code=normalizeBarcode(codes[0]),sum=(quantities.get(code)||0)+qty;quantities.set(code,sum)}}}finally{await worker.terminate()}return {quantities,perFile,pageTexts}}
+async function ocrFiles(files,statusId,lang="eng"){if(!files.length)throw Error("Izaberi fotografiju/fotografije prvo.");if(!window.Tesseract)throw Error("OCR biblioteka nije učitana. Proveri internet vezu.");const worker=await Tesseract.createWorker(lang);let texts=[],images=[];try{for(let i=0;i<files.length;i++){setStatus(statusId,`Čitam tekst sa fotografije ${i+1}/${files.length}…`);const r=await worker.recognize(files[i]);texts.push(`--- FOTOGRAFIJA ${i+1} ---\n${r.data.text}`);images.push(await fileData(files[i]))}}finally{await worker.terminate()}return {text:texts.join("\n\n"),images}}
+async function loadXlsxLibrary(){if(window.XLSX)return true;setStatus("catalogStatus","Učitavam Excel biblioteku… proveri internet vezu.","warn");const urls=["https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js","https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"];for(const src of urls){try{await new Promise((resolve,reject)=>{const sc=document.createElement("script");sc.src=src;sc.onload=resolve;sc.onerror=()=>reject(Error("Ne mogu da učitam "+src));document.head.appendChild(sc)});if(window.XLSX)return true}catch(e){}}return !!window.XLSX}
+async function importCatalogNow(){try{setStatus("catalogStatus","Pokrećem uvoz kataloga…","warn");const f=$("catalogFile").files[0];if(!f){setStatus("catalogStatus","Prvo izaberi SAP-test.xlsx preko dugmeta za izbor fajla.","warn");return}if(!(await loadXlsxLibrary()))throw Error("Excel biblioteka nije dostupna. Proveri internet vezu pa osveži stranicu.");const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}),ws=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});if(rows.length<2)throw Error("Fajl nema redove artikala.");const headers=rows[0].map(clean);const idx=keys=>headers.findIndex(h=>keys.some(k=>h.includes(k)));let ci=idx(["sifra","sifartikla","artikal","code","sku"]),ni=idx(["naziv","name","opis"]),bi=idx(["barkod","barcode","ean","upc"]),ui=idx(["jedinica","unit","jm"]);if(ni<0)ni=1;if(ci<0)ci=0;catalog=rows.slice(1).filter(r=>r.some(v=>String(v).trim())).map(r=>({code:String(r[ci]??"").trim(),name:String(r[ni]??"").trim(),barcode:bi<0?"":normalizeBarcode(r[bi]),unit:ui<0?"":String(r[ui]??"").trim()})).filter(x=>x.code||x.name||x.barcode);setStatus("catalogStatus",`Učitano ${catalog.length} artikala. Proveri šifre, nazive i barkodove pre upotrebe.`,"good")}catch(e){setStatus("catalogStatus","Uvoz nije uspeo: "+(e&&e.message?e.message:String(e)),"warn")}}
+window.importCatalogNow=importCatalogNow;$("importCatalog").onclick=importCatalogNow;
+function parseReceiptCsv(text){const rows=[];let row=[],cell="",quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'&&quoted&&text[i+1]==='"'){cell+='"';i++}else if(c==='"')quoted=!quoted;else if((c===','||c===';')&&!quoted){row.push(cell);cell=""}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(v=>v.trim()))rows.push(row);row=[];cell=""}else cell+=c}row.push(cell);if(row.some(v=>v.trim()))rows.push(row);return rows}
+function receiptCsvIndex(headers,keys){return headers.findIndex(h=>keys.includes(h.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'')))}
+$("importArrivalCsv").onclick=async()=>{const files=Array.from($("arrivalCsvFiles").files||[]);if(!files.length){setStatus("arrivalStatus","Izaberi jedan ili više CSV fajlova iz MINI aplikacije.","warn");return}if(arrival.length&&!confirm("CSV stavke će se spojiti sa trenutnim fizičkim prijemom; količine duplikata će se sabrati. Nastaviti?"))return;let count=0,merged=0;try{for(const file of files){const rows=parseReceiptCsv((await file.text()).replace(/^\uFEFF/,''));if(rows.length<2)continue;const h=rows[0].map(x=>x.trim()),ci=receiptCsvIndex(h,["sifra","code","sku"]),bi=receiptCsvIndex(h,["barkod","barcode","ean","upc"]),ni=receiptCsvIndex(h,["nazivartikla","naziv","name","artikal"]),qi=receiptCsvIndex(h,["kolicina","qty","quantity"]);if(ci<0&&bi<0&&ni<0)throw Error("CSV nema prepoznatljive kolone šifre, barkoda ili naziva: "+file.name);for(const r of rows.slice(1)){const item={code:ci<0?"":String(r[ci]||"").trim(),barcode:bi<0?"":normalizeBarcode(r[bi]),name:ni<0?"":String(r[ni]||"").trim(),qty:qi<0?"":String(r[qi]||"").trim().replace(",","."),unit:""};if(!item.code&&!item.barcode&&!item.name)continue;const exists=arrival.some(a=>sameProduct(a,item)||(!item.code&&!item.barcode&&item.name&&clean(a.name)===clean(item.name)));addArrival(item);if(exists)merged++;else count++}}if(!count&&!merged)throw Error("U CSV fajlovima nema prepoznatih stavki.");$("arrivalCsvFiles").value="";setStatus("arrivalStatus",`Uvoz završen: ${count} novih stavki i ${merged} spojenih duplikata iz ${files.length} fajlova. Proveri količine, zatim sačuvaj fizički prijem.`,"good")}catch(e){setStatus("arrivalStatus","CSV uvoz nije uspeo: "+e.message,"warn")}};
+$("exportCatalog").onclick=()=>download("SAP_katalog.csv",["Sifra,Naziv,Barkod,Jedinica",...catalog.map(x=>[x.code,x.name,x.barcode,x.unit].map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(","))].join("\n"),"text/csv;charset=utf-8");
+$("addRow").onclick=()=>addArrival();$("addNoteRow").onclick=()=>addNote();
+$("readArrival").onclick=async()=>{try{prepareAudio();const files=[...$("arrivalPhotos").files];if(!files.length)throw Error("Izaberi fotografiju/fotografije prvo.");const scan=await detectBarcodes(files,"arrivalStatus");let ocr={quantities:new Map(),perFile:files.map(()=>null),pageTexts:[]};try{ocr=await readPackageQuantities(files,scan.byFile||files.map(()=>[]),"arrivalStatus")}catch(ocrError){setStatus("arrivalStatus","Barkod je pročitan, ali OCR količine nije dostupan. Stavke su dodate bez količine; unesi je ručno.","warn")}let added=0,matched=0,duplicates=scan.duplicateReads||0;const unknown=[];for(const raw of scan.found){const norm=normalizeBarcode(raw),product=catalog.find(p=>normalizeBarcode(p.barcode)===norm);if(product){matched++;const qty=ocr.quantities.get(norm)??"";if(addArrival({code:product.code,barcode:product.barcode||raw,name:product.name,unit:product.unit,qty}))added++;else duplicates++}else unknown.push(raw)}arrivalImages=arrivalImages.concat(await Promise.all(files.map(fileData)));if(scan.found.length){let msg=`EAN dekoder je pronašao ${scan.found.length} barkod(ova); ${matched} povezano sa katalogom, ${added} novih stavki.`;if(duplicates)msg+=` Duplikata: ${duplicates}; proveri zbirnu količinu.`;if(ocr.quantities.size)msg+=` OCR je popunio količinu za ${ocr.quantities.size} artikal(a); proveri vrednosti.`;else msg+=" OCR nije prepoznao jasno označenu količinu; unesi je ručno.";if(unknown.length)msg+=` Nepoznati barkodovi: ${unknown.join(", ")}.`;setStatus("arrivalStatus",msg,duplicates||!matched?"warn":"good")}else{let ocrAdded=0,qtyAdded=0;for(let i=0;i<ocr.pageTexts.length;i++){const found=new Map();for(const line of ocr.pageTexts[i].split(/\n/).map(x=>x.trim()).filter(Boolean)){const product=findMatch(line);if(product)found.set(clean(product.barcode)||clean(product.code)||clean(product.name),product)}for(const product of found.values()){const qty=found.size===1&&ocr.perFile[i]!==null?String(ocr.perFile[i]):"";if(qty!=="")qtyAdded++;if(addArrival({code:product.code,barcode:product.barcode,name:product.name,unit:product.unit,qty}))ocrAdded++;else duplicates++}}let msg=`EAN barkod nije pronađen. OCR je dodao ${ocrAdded} mogućih artikala; proveri ih.`;if(qtyAdded)msg+=` Jasno označena količina popunjena je za ${qtyAdded} stavku(e); proveri.`;else msg+=" Količina nije jasno prepoznata i ostaje prazna.";setStatus("arrivalStatus",msg,"warn")}}catch(e){setStatus("arrivalStatus",e.message,"warn")}};
+$("readNote").onclick=async()=>{try{const r=await ocrFiles([...$("notePhotos").files],"noteStatus");noteImages=noteImages.concat(r.images);$("noteText").value=r.text;setStatus("noteStatus","OCR je završen. Proveri tekst; OCR može pogrešiti šifre, kolone i količine.","warn")}catch(e){setStatus("noteStatus",e.message,"warn")}};
+$("suggestNoteItems").onclick=()=>{const text=$("noteText").value;if(!text.trim())return alert("Prvo pročitaj otpremnicu ili nalepi tekst.");let added=0;for(const line of text.split(/\n/).map(x=>x.trim()).filter(Boolean)){const m=findMatch(line);if(m&&!noteItems.some(a=>(m.code&&a.code===m.code)||(m.barcode&&a.barcode===m.barcode))){noteItems.push(rowItem({code:m.code,barcode:m.barcode,name:m.name,unit:m.unit,qty:""}));added++}}renderNote();setStatus("noteStatus",`Pronađeno ${added} mogućih stavki iz kataloga. Količine sa otpremnice unesi/proveri ručno u tabeli.`,"warn")};
+$("saveArrival").onclick=()=>{if(!arrival.length)return alert("Nema artikala za čuvanje. Dodaj ih prvo.");const missing=arrival.filter(x=>x.qty===""||x.qty===null);if(missing.length&&!confirm(`${missing.length} artikala nema unetu količinu. Sačuvati prijem i nastaviti?`))return;const data={version:2,receiptNo:$("receiptNo").value,date:new Date().toISOString(),catalog,arrival,noteItems,arrivalImages,noteImages,noteText:$("noteText").value};try{localStorage.setItem("prijemRobeAI_v2",JSON.stringify(data));setStatus("savedStatus",`Prijem sačuvan u ovom pregledaču. Stavki: ${arrival.length}. Za sigurnost izvezi JSON rezervnu kopiju.`,"good")}catch(e){setStatus("savedStatus","Čuvanje nije uspelo (moguće premalo prostora). Izvezi rezervnu kopiju JSON. Greška: "+e.message,"warn")}};
+$("compare").onclick=()=>{if(!arrival.length||!noteItems.length)return alert("Potrebne su stavke i iz fizičkog prijema i sa otpremnice.");const key=x=>clean(x.barcode)||clean(x.code)||clean(x.name);const used=new Set(),results=[];for(const n of noteItems){const k=key(n);let a=arrival.find((x,i)=>!used.has(i)&&((clean(n.barcode)&&clean(n.barcode)===clean(x.barcode))||(clean(n.code)&&clean(n.code)===clean(x.code))||(!n.barcode&&!n.code&&clean(n.name)&&clean(n.name)===clean(x.name))));if(a){used.add(arrival.indexOf(a));const nq=n.qty===""?null:Number(n.qty),aq=a.qty===""?null:Number(a.qty);let state;if(nq===null||aq===null)state="Nedostaje količina — proveri";else if(aq<nq)state="MANJAK";else if(aq>nq)state="VIŠAK";else state="Poklapa se";results.push({name:n.name||a.name||n.code,expected:nq,actual:aq,state})}else results.push({name:n.name||n.code||n.barcode,expected:n.qty===""?null:Number(n.qty),actual:null,state:"Na otpremnici, nije pronađen u fizičkom prijemu"})}arrival.forEach((a,i)=>{if(!used.has(i))results.push({name:a.name||a.code||a.barcode,expected:null,actual:a.qty===""?null:Number(a.qty),state:"Fizički primljen, nije na otpremnici"})});const body=document.createElement("div");body.className="panel";const counts={"MANJAK":0,"VIŠAK":0,"Poklapa se":0};results.forEach(r=>{if(counts[r.state]!==undefined)counts[r.state]++});body.innerHTML=`<h3>Rezultat poređenja</h3><div class="statgrid"><div class="stat"><strong>${counts["Poklapa se"]}</strong>Poklapa se</div><div class="stat"><strong>${counts.MANJAK}</strong>Manjak</div><div class="stat"><strong>${counts["VIŠAK"]}</strong>Višak</div><div class="stat"><strong>${results.filter(r=>r.state.includes("nije")||r.state.includes("Nedostaje")).length}</strong>Za proveru</div></div><div class="tablewrap"><table><thead><tr><th>Artikal</th><th>Količina po otpremnici</th><th>Fizički primljeno</th><th>Rezultat</th></tr></thead><tbody>${results.map(r=>`<tr><td>${escapeHtml(r.name)}</td><td>${r.expected===null?"—":escapeHtml(r.expected)}</td><td>${r.actual===null?"—":escapeHtml(r.actual)}</td><td>${escapeHtml(r.state)}</td></tr>`).join("")}</tbody></table></div><p class="muted">Poređenje koristi barkod, zatim šifru; naziv se koristi samo kada nema šifre ni barkoda. Proveri stavke koje OCR ili katalog nisu pouzdano povezali.</p>`;$("results").replaceChildren(body);setStatus("compareStatus","Poređenje je završeno. Proveri sve stavke označene „Za proveru“; rezultat zavisi od ispravnosti unetih podataka.","good")};
+$("backup").onclick=()=>{const data={version:2,receiptNo:$("receiptNo").value,catalog,arrival,noteItems,arrivalImages,noteImages,noteText:$("noteText").value,exportedAt:new Date().toISOString()};download("prijem_robe_rezervna_kopija.json",JSON.stringify(data,null,2))};
+$("restoreFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!confirm("Uvoz rezervne kopije će zameniti trenutne podatke na ekranu. Nastaviti?"))return;catalog=d.catalog||[];arrival=d.arrival||[];noteItems=d.noteItems||[];arrivalImages=d.arrivalImages||[];noteImages=d.noteImages||[];$("receiptNo").value=d.receiptNo||"";$("noteText").value=d.noteText||"";renderArrival();renderNote();setStatus("savedStatus","Rezervna kopija je učitana. Proveri podatke pa ih sačuvaj.","good");setStatus("catalogStatus",`Učitano ${catalog.length} artikala iz kopije.`,"good")}catch(err){alert("Ne mogu da učitam kopiju: "+err.message)}};
+$("clearDraft").onclick=()=>{if(!confirm("Obrisati trenutne stavke sa ekrana? Prethodno izvezi rezervnu kopiju ako želiš da ih sačuvaš."))return;arrival=[];noteItems=[];arrivalImages=[];noteImages=[];$("noteText").value="";$("arrivalPhotos").value="";$("notePhotos").value="";$("receiptNo").value="";renderArrival();renderNote();$("results").replaceChildren();setStatus("arrivalStatus","Trenutni unos je očišćen.")};
+try{const d=JSON.parse(localStorage.getItem("prijemRobeAI_v2")||"null");if(d){catalog=d.catalog||[];arrival=d.arrival||[];noteItems=d.noteItems||[];arrivalImages=d.arrivalImages||[];noteImages=d.noteImages||[];$("receiptNo").value=d.receiptNo||"";$("noteText").value=d.noteText||"";renderArrival();renderNote();setStatus("savedStatus","Učitani su prethodno sačuvani podaci iz ovog pregledača.","good");setStatus("catalogStatus",`Učitano ${catalog.length} artikala iz lokalno sačuvanih podataka.`,"good")}}catch(e){setStatus("savedStatus","Postojeći lokalni podaci nisu mogli da se učitaju. Izbegni brisanje podataka pregledača.","warn")}
+</script><script>if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
+<script>(()=>{const k='prijem-robe-tema-maketa',r=document.documentElement,b=document.querySelector('[data-theme-toggle]');let t='light';try{t=localStorage.getItem(k)||'light'}catch(e){}const a=()=>{r.dataset.theme=t;if(b)b.textContent=t==='light'?'☾ Tamna tema':'☼ Svetla tema'};a();b?.addEventListener('click',()=>{t=t==='light'?'dark':'light';try{localStorage.setItem(k,t)}catch(e){}a()})})();</script><nav class="pr-bottom-nav" aria-label="Glavna navigacija"><a href="./mini.html#scannerPanel"><span class="nav-icon">▦</span><span>Novi prijem</span></a><a href="./mini.html#listPanel"><span class="nav-icon">▤</span><span>Arhiva</span></a><a href="./pro.html#catalogPanel"><span class="nav-icon">◇</span><span>Katalog</span></a><a href="./pro.html#notePanel"><span class="nav-icon">▧</span><span>Kontrola</span></a></nav></body>
+</html>
